@@ -3,31 +3,52 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+    --color-bg-teal-500: #009688;
+    --color-hover-bg-teal-700: #00796b;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+.color-button {
+    background-color: var(--color-bg-teal-500);
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+.color-button:hover {
+    background-color: var(--color-hover-bg-teal-700);
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+.color-bg-teal-500 {
+    background-color: var(--color-bg-teal-500);
+}
+
+.color-text {
+    color: var(--color-bg-teal-500);
+}
+
+/* width */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    /* Ajusta este valor para cambiar la altura */
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+    /* Ajusta este valor para cambiar el radio del borde */
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-bg-teal-500);
+}
+
+/* Scrollbar horizontal */
+::-webkit-scrollbar-horizontal {
+    height: 5px;
+    /* Ajusta este valor para cambiar la altura */
 }
