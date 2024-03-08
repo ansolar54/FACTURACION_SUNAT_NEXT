@@ -6,7 +6,10 @@ import {
     UserPlusIcon,
     TrashIcon,
     PencilIcon,
-    PlusIcon 
+    PlusIcon,
+    Square3Stack3DIcon,
+    UserCircleIcon,
+    Cog6ToothIcon
 } from '@heroicons/react/24/outline'
 
 export {
@@ -15,5 +18,8 @@ export {
     UserPlusIcon,
     TrashIcon,
     PencilIcon,
-    PlusIcon 
+    PlusIcon,
+    Square3Stack3DIcon,
+    UserCircleIcon,
+    Cog6ToothIcon
 }

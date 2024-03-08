@@ -48,12 +48,12 @@ export default function Cliente() {
     // VARIABLES PARA PAGINADO
     const [CurrentPage, setCurrentPage] = useState(1);
     const Limit = 1;
-    const [TotalItems, setTotalItems] = React.useState(0);
+    const [TotalItems, setTotalItems] = useState(0);
     const totalPages = Math.ceil(TotalItems / Limit);
 
     // MODAL CLIENTE
-    const [openAddCliente, setOpenAddCliente] = React.useState(false);
-    const [openEditCliente, setOpenEditCliente] = React.useState(false);
+    const [openAddCliente, setOpenAddCliente] = useState(false);
+    const [openEditCliente, setOpenEditCliente] = useState(false);
 
     // CONST SELECCIONADO PARA MODAL EDIT CLIENTE
     const [seleccionado, setSeleccionado] = React.useState<Cliente | undefined>(undefined);
