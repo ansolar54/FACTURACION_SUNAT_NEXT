@@ -10,6 +10,7 @@ interface AddClienteProps {
     open: boolean;
     setOpen: (open: boolean) => void;
     onListCliente: () => void;
+    onGuardarCliente: (cliente: Cliente_Add) => void;
 }
 
 type Body = {
@@ -17,7 +18,7 @@ type Body = {
     Nombre: string;
 };
 
-type Cliente = {
+export interface Cliente_Add{
     Nombres: string,
     Apellidos: string,
     Razon_Social: string,
@@ -31,12 +32,13 @@ type Cliente = {
 const AddCliente: React.FC<AddClienteProps> = ({
     open,
     setOpen,
-    onListCliente
+    onListCliente,
+    onGuardarCliente
 }) => {
 
     const [ListaDocCliente, setListaDocCliente] = useState<Body[]>([]);
 
-    const [cliente, setCliente] = useState<Cliente>({
+    const [cliente, setCliente] = useState<Cliente_Add>({
         Nombres: "",
         Apellidos: "",
         Razon_Social: "",
@@ -119,13 +121,13 @@ const AddCliente: React.FC<AddClienteProps> = ({
         let errorField = '';
 
         for (const field in validations) {
-            if (cliente[field as keyof Cliente] == 0 || cliente[field as keyof Cliente] == '') {
+            if (cliente[field as keyof Cliente_Add] == 0 || cliente[field as keyof Cliente_Add] == '') {
                 if ((field == 'Nombres' && cliente.Id_Tipo_Doc != 4) || (field == 'Apellidos' && cliente.Id_Tipo_Doc != 4) || (field === 'Razon_Social' && cliente.Id_Tipo_Doc == 4) || (field != 'Nombres' && field != 'Apellidos' && field != 'Razon_Social')) {
                     toast.error(
-                        `"${validations[field as keyof Cliente]}" está vacío.`, {
+                        `"${validations[field as keyof Cliente_Add]}" está vacío.`, {
                         duration: 2000,
                         position: 'top-center',
-                        id: `"${validations[field as keyof Cliente]}" está vacío.`
+                        id: `"${validations[field as keyof Cliente_Add]}" está vacío.`
                     });
                     errorField = field;
                     break;
@@ -145,7 +147,7 @@ const AddCliente: React.FC<AddClienteProps> = ({
 
         setShowErrors(errors);
         if (!errorField) {
-            guardar(); 
+            guardar();
         }
     }
 
@@ -166,6 +168,7 @@ const AddCliente: React.FC<AddClienteProps> = ({
                     duration: 2000,
                     position: 'top-center',
                 });
+                onGuardarCliente(cliente);
                 functionCancelar();
                 onListCliente();
             }

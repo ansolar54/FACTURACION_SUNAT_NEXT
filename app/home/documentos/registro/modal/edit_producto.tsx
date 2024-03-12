@@ -1,14 +1,14 @@
 "use client"
 import React, { useRef, useState, useEffect } from 'react'
-import toast, { Toaster } from 'react-hot-toast';
 import { Button, Card, Dialog, DialogBody, DialogFooter, DialogHeader, Input, Option, Select } from '@/shared/material-tailwind-component'
+import toast, { Toaster } from 'react-hot-toast';
 import { ObtenerEmpresaAll } from '@/services/empresa';
 
 interface Props {
     open: boolean;
     setOpen: (open: boolean) => void;
-    onAgregarProducto: (producto: Producto) => void;
-    dataProducto: Producto[];
+    seleccionado?: Producto;
+    onEditarProducto: (producto: Producto) => void;
 }
 
 interface Producto {
@@ -22,25 +22,28 @@ interface Producto {
     Importe: number,
 }
 
-const AddProducto: React.FC<Props> = ({
+const EditProducto: React.FC<Props> = ({
     open,
     setOpen,
-    onAgregarProducto,
-    dataProducto
+    seleccionado,
+    onEditarProducto,
 }) => {
 
+    const initialClienteRef = useRef<Producto | null>(null);
+
+    const [igvPercent, setigvPercent] = useState(0);
+
     const [producto, setProducto] = useState<Producto>({
-        Tipo_Tributo: "IGV",
+        Tipo_Tributo: "",
         Codigo_Producto: "",
         Descripcion: "",
         Cantidad: "", // Number
-        Unidad_Medida: "NIU",
-        Bien_Servicio: "B",
+        Unidad_Medida: "",
+        Bien_Servicio: "",
         Valor_Unitario: "",
         Importe: 0,
     });
-
-    const [igvPercent, setigvPercent] = useState(0);
+    // console.log(seleccionado)
 
     const [showErrors, setShowErrors] = useState<{ [key: string]: boolean }>({
         Bien_Servicio: false,
@@ -52,6 +55,154 @@ const AddProducto: React.FC<Props> = ({
         Tipo_Tributo: false,
         Importe: false,
     });
+
+    useEffect(() => {
+        if (seleccionado) {
+            setProducto({
+                Tipo_Tributo: seleccionado.Tipo_Tributo,
+                Codigo_Producto: seleccionado.Codigo_Producto,
+                Descripcion: seleccionado.Descripcion,
+                Cantidad: seleccionado.Cantidad,
+                Unidad_Medida: seleccionado.Unidad_Medida,
+                Bien_Servicio: seleccionado.Bien_Servicio,
+                Valor_Unitario: seleccionado.Valor_Unitario,
+                Importe: seleccionado.Importe,
+            });
+            initialClienteRef.current = { ...seleccionado };
+        }
+    }, [seleccionado])
+
+    useEffect(() => {
+        ObtenerEmpresaAll().then((result_1: any) => {
+            if (result_1.indicator == 1) {
+                const Igv = result_1.data[0].Igv;
+                setigvPercent(Igv);
+            }
+        })
+    }, [])
+
+    const camposModificados = () => {
+        return Object.keys(producto).some(key => producto[key as keyof Producto] !== initialClienteRef.current?.[key as keyof Producto]);
+    };
+
+    const handleChange = (name: string, value: any) => {
+        if (name == 'Cantidad' || name == 'Valor_Unitario') {
+            const cantidad = parseFloat(name == 'Cantidad' ? value : producto.Cantidad);
+            const valorUnitario = parseFloat(name == 'Valor_Unitario' ? value : producto.Valor_Unitario);
+            let importe = isNaN(cantidad) || isNaN(valorUnitario) ? 0 : cantidad * valorUnitario;
+            if (producto.Tipo_Tributo === 'IGV') {
+                importe += importe * (igvPercent / 100);
+            }
+            else {
+                importe = importe;
+            }
+            setProducto(prevState => ({
+                ...prevState,
+                [name]: value,
+                Importe: Number(importe.toFixed(2)),
+            }));
+        }
+        if (name == 'Tipo_Tributo') {
+            const cantidad = parseFloat(producto.Cantidad);
+            const valorUnitario = parseFloat(producto.Valor_Unitario);
+            let importe = isNaN(cantidad) || isNaN(valorUnitario) ? 0 : cantidad * valorUnitario;
+
+            if (value == 'IGV') {
+                importe += importe * (igvPercent / 100);
+            }
+            else {
+                importe = importe;
+            }
+
+            setProducto(prevState => ({
+                ...prevState,
+                [name]: value,
+                Importe: Number(importe.toFixed(2)),
+            }));
+
+        } else {
+            setProducto(prevState => ({
+                ...prevState,
+                [name]: value,
+            }));
+        }
+    }
+
+    function functionCancelar() {
+        setOpen(false)
+        functionLimpiarCampos();
+    }
+
+    const functionLimpiarCampos = () => {
+        setProducto({
+            Tipo_Tributo: seleccionado!.Tipo_Tributo,
+            Codigo_Producto: seleccionado!.Codigo_Producto,
+            Descripcion: seleccionado!.Descripcion,
+            Cantidad: seleccionado!.Cantidad,
+            Unidad_Medida: seleccionado!.Unidad_Medida,
+            Bien_Servicio: seleccionado!.Bien_Servicio,
+            Valor_Unitario: seleccionado!.Valor_Unitario,
+            Importe: seleccionado!.Importe,
+        });
+        setShowErrors({});
+    };
+
+    function functionValidarProducto() {
+        const validations = {
+            Bien_Servicio: 'Bien / Servicio',
+            Cantidad: 'Cantidad',
+            Unidad_Medida: 'Unidad de Medida',
+            Codigo_Producto: 'Código',
+            Descripcion: 'Descripción',
+            Valor_Unitario: 'Valor Unitario',
+            Tipo_Tributo: 'Tipo de Tributo',
+            Importe: 'Importe',
+        };
+
+        let errorField = '';
+
+        for (const field in validations) {
+            if (producto[field as keyof Producto] == 0 || producto[field as keyof Producto] == '') {
+                toast.error(
+                    `"${validations[field as keyof Producto]}" está vacío.`, {
+                    duration: 2000,
+                    position: 'top-center',
+                    id: `"${validations[field as keyof Producto]}" está vacío.`
+                });
+                errorField = field;
+                break;
+            }
+        }
+
+        const errors = {
+            Bien_Servicio: errorField === 'Bien_Servicio',
+            Cantidad: errorField === 'Cantidad',
+            Unidad_Medida: errorField === 'Unidad_Medida',
+            Codigo_Producto: errorField === 'Codigo_Producto',
+            Descripcion: errorField === 'Descripcion',
+            Valor_Unitario: errorField === 'Valor_Unitario',
+            Tipo_Tributo: errorField === 'Tipo_Tributo',
+            Importe: errorField === 'Importe',
+        };
+
+        setShowErrors(errors);
+        if (!errorField) {
+            if (camposModificados()) {
+                guardar();
+            } else {
+                toast('Los campos no han sido modificados.', {
+                    duration: 2000,
+                    position: 'top-center',
+                    icon: '⚠️',
+                    id: 'Los campos no han sido modificados.'
+                });
+            }
+        }
+    }
+    function guardar() {
+        onEditarProducto(producto);
+        functionCancelar();
+    }
 
     const tipoProductooption = [
         { code: 'B', name: 'BIEN' },
@@ -129,134 +280,6 @@ const AddProducto: React.FC<Props> = ({
         { code: 'EXO', name: 'EXONERADO' },
     ];
 
-    useEffect(() => {
-        ObtenerEmpresaAll().then((result_1: any) => {
-            if (result_1.indicator == 1) {
-                const Igv = result_1.data[0].Igv;
-                setigvPercent(Igv);
-            }
-        })
-    }, [])
-
-    function functionCancelar() {
-        setOpen(false)
-        functionLimpiarCampos();
-    }
-
-    const functionLimpiarCampos = () => {
-        setProducto({
-            Tipo_Tributo: "IGV",
-            Codigo_Producto: "",
-            Descripcion: "",
-            Cantidad: "", // Number
-            Unidad_Medida: "NIU",
-            Bien_Servicio: "B",
-            Valor_Unitario: "",
-            Importe: 0,
-        });
-        setShowErrors({});
-    };
-
-    function functionValidarProducto() {
-        const validations = {
-            Bien_Servicio: 'Bien / Servicio',
-            Cantidad: 'Cantidad',
-            Unidad_Medida: 'Unidad de Medida',
-            Codigo_Producto: 'Código',
-            Descripcion: 'Descripción',
-            Valor_Unitario: 'Valor Unitario',
-            Tipo_Tributo: 'Tipo de Tributo',
-            Importe: 'Importe',
-        };
-
-        let errorField = '';
-
-        for (const field in validations) {
-            if (producto[field as keyof Producto] == 0 || producto[field as keyof Producto] == '') {
-                toast.error(
-                    `"${validations[field as keyof Producto]}" está vacío.`, {
-                    duration: 2000,
-                    position: 'top-center',
-                    id: `"${validations[field as keyof Producto]}" está vacío.`
-                });
-                errorField = field;
-                break;
-            }
-        }
-
-        const errors = {
-            Bien_Servicio: errorField === 'Bien_Servicio',
-            Cantidad: errorField === 'Cantidad',
-            Unidad_Medida: errorField === 'Unidad_Medida',
-            Codigo_Producto: errorField === 'Codigo_Producto',
-            Descripcion: errorField === 'Descripcion',
-            Valor_Unitario: errorField === 'Valor_Unitario',
-            Tipo_Tributo: errorField === 'Tipo_Tributo',
-            Importe: errorField === 'Importe',
-        };
-
-        setShowErrors(errors);
-        if (!errorField) {
-            guardar();
-        }
-    }
-
-    function guardar() {
-        const existe = dataProducto.some(p => p.Codigo_Producto == producto.Codigo_Producto);
-        if (existe) {
-            toast.error("El Código de Producto ya existe.", {
-                duration: 2000,
-                position: 'top-center',
-            });
-        } else {
-            onAgregarProducto(producto);
-            functionCancelar();
-        }
-    }
-
-    const handleChange = (name: string, value: any) => {
-        if (name == 'Cantidad' || name == 'Valor_Unitario') {
-            const cantidad = parseFloat(name == 'Cantidad' ? value : producto.Cantidad);
-            const valorUnitario = parseFloat(name == 'Valor_Unitario' ? value : producto.Valor_Unitario);
-            let importe = isNaN(cantidad) || isNaN(valorUnitario) ? 0 : cantidad * valorUnitario;
-            if (producto.Tipo_Tributo === 'IGV') {
-                importe += importe * (igvPercent / 100);
-            }
-            else {
-                importe = importe;
-            }
-            setProducto(prevState => ({
-                ...prevState,
-                [name]: value,
-                Importe: Number(importe.toFixed(2)),
-            }));
-        }
-        if (name == 'Tipo_Tributo') {
-            const cantidad = parseFloat(producto.Cantidad);
-            const valorUnitario = parseFloat(producto.Valor_Unitario);
-            let importe = isNaN(cantidad) || isNaN(valorUnitario) ? 0 : cantidad * valorUnitario;
-
-            if (value == 'IGV') {
-                importe += importe * (igvPercent / 100);
-            }
-            else {
-                importe = importe;
-            }
-
-            setProducto(prevState => ({
-                ...prevState,
-                [name]: value,
-                Importe: Number(importe.toFixed(2)),
-            }));
-
-        } else {
-            setProducto(prevState => ({
-                ...prevState,
-                [name]: value,
-            }));
-        }
-    }
-
     function functionComasMiles(number: string) {
         // Convertir el número a string y separar la parte entera de la decimal
         let parts = number.toString().split(".");
@@ -276,10 +299,9 @@ const AddProducto: React.FC<Props> = ({
                 animate={{
                     mount: { scale: 1, y: 0 },
                     unmount: { scale: 0.9, y: -100 },
-                }}
-            >
+                }}>
                 <Toaster />
-                <DialogHeader>Agregar Producto</DialogHeader>
+                <DialogHeader>Editar Producto</DialogHeader>
                 <DialogBody divider>
                     <Card color="transparent" shadow={false}>
                         <form>
@@ -291,14 +313,13 @@ const AddProducto: React.FC<Props> = ({
                                         label="Bien / Servicio"
                                         name="Bien_Servicio"
                                         size="md"
-                                        value={producto.Bien_Servicio.toString()}
-                                        key={producto.Bien_Servicio}
+                                        value={producto.Bien_Servicio}
                                         onChange={(e) => {
                                             handleChange('Bien_Servicio', e)
                                         }}
                                     >
-                                        {tipoProductooption.map((tipo) => (
-                                            <Option key={tipo.code} value={tipo.code.toString()}>
+                                        {tipoProductooption.map((tipo, index) => (
+                                            <Option key={index} value={tipo.code}>
                                                 {tipo.name}
                                             </Option>
                                         ))}
@@ -328,19 +349,20 @@ const AddProducto: React.FC<Props> = ({
                                         name="Unidad_Medida"
                                         size="md"
                                         value={producto.Unidad_Medida}
-                                        key={producto.Unidad_Medida}
                                         onChange={(e) => {
                                             handleChange('Unidad_Medida', e)
                                         }}
                                     >
-                                        {unidadMedidaoption.map((tipo) => (
-                                            <Option key={tipo.code} value={tipo.code}>
+                                        {unidadMedidaoption.map((tipo, index) => (
+                                            <Option key={index} value={tipo.code}>
                                                 {tipo.name}
                                             </Option>
                                         ))}
                                     </Select>
                                     <div>
                                         <Input
+                                            className='cursor-not-allowed'
+                                            disabled
                                             color='teal'
                                             error={showErrors.Codigo_Producto && (producto.Codigo_Producto == '')}
                                             crossOrigin={undefined}
@@ -377,7 +399,7 @@ const AddProducto: React.FC<Props> = ({
                                             error={showErrors.Valor_Unitario && (producto.Valor_Unitario == '')}
                                             crossOrigin={undefined}
                                             name="Valor_Unitario"
-                                            value={(producto.Valor_Unitario)}
+                                            value={producto.Valor_Unitario}
                                             size="md"
                                             label="Valor Unitario"
                                             onChange={(e) => {
@@ -410,6 +432,7 @@ const AddProducto: React.FC<Props> = ({
                                     <div>
                                         <Input
                                             className='cursor-not-allowed'
+                                            readOnly
                                             color='teal'
                                             error={showErrors.Importe && (producto.Importe == 0)}
                                             crossOrigin={undefined}
@@ -418,7 +441,6 @@ const AddProducto: React.FC<Props> = ({
                                             size="md"
                                             label="Importe"
                                             maxLength={10}
-                                            readOnly
                                         />
                                     </div>
                                 </div>
@@ -447,4 +469,4 @@ const AddProducto: React.FC<Props> = ({
     )
 }
 
-export default AddProducto
+export default EditProducto

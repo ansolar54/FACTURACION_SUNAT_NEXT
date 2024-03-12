@@ -23,7 +23,19 @@ import {
   Typography,
 } from "../material-tailwind-component";
 
-import { ChevronRightIcon, ChevronDownIcon, PresentationChartBarIcon, ShoppingBagIcon, InboxIcon, UserCircleIcon, Cog6ToothIcon, PowerIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  EyeIcon,
+  DocumentIcon,
+  DocumentArrowDownIcon,
+  ArrowDownCircleIcon,
+  AdjustmentsHorizontalIcon,
+  ChevronRightIcon, ChevronDownIcon,
+  DocumentMagnifyingGlassIcon 
+} from '@/shared/heroicons'
+
+import { PresentationChartBarIcon, ShoppingBagIcon, InboxIcon, UserCircleIcon, Cog6ToothIcon, PowerIcon  } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 
@@ -133,7 +145,7 @@ export default function Navegador() {
 
           </div>
         </Navbar>
-        <Drawer open={open1} onClose={closeDrawer} className="p-4">
+        <Drawer open={open1} onClose={closeDrawer} className="p-2">
           <Card
             color="transparent"
             shadow={false}
@@ -156,7 +168,7 @@ export default function Navegador() {
                     className="border-b-0 p-3"
                   >
                     <ListItemPrefix>
-                      <PresentationChartBarIcon className="h-5 w-5" />
+                      <AdjustmentsHorizontalIcon className="h-5 w-5" />
                     </ListItemPrefix>
                     <Typography color="blue-gray" className="mr-auto font-normal">
                       Administración
@@ -200,7 +212,7 @@ export default function Navegador() {
                     className="border-b-0 p-3"
                   >
                     <ListItemPrefix>
-                      <ShoppingBagIcon className="h-5 w-5" />
+                      <DocumentMagnifyingGlassIcon className="h-5 w-5" />
                     </ListItemPrefix>
                     <Typography color="blue-gray" className="mr-auto font-normal">
                       Documentos
@@ -217,49 +229,17 @@ export default function Navegador() {
                         Registro
                       </ListItem>
                     </Link>
-                    <ListItem>
-                      <ListItemPrefix>
-                        <ChevronRightIcon strokeWidth={3} className="h-3 w-5" />
-                      </ListItemPrefix>
-                      Listado
-                    </ListItem>
+                    <Link href="/home/documentos/listado">
+                      <ListItem  onClick={closeDrawer}>
+                        <ListItemPrefix>
+                          <ChevronRightIcon strokeWidth={3} className="h-3 w-5" />
+                        </ListItemPrefix>
+                        Listado
+                      </ListItem>
+                    </Link>
                   </List>
                 </AccordionBody>
               </Accordion>
-              <hr className="my-2 border-blue-gray-50" />
-              <ListItem>
-                <ListItemPrefix>
-                  <InboxIcon className="h-5 w-5" />
-                </ListItemPrefix>
-                Inbox
-                <ListItemSuffix>
-                  <Chip
-                    value="14"
-                    size="sm"
-                    variant="ghost"
-                    color="blue-gray"
-                    className="rounded-full"
-                  />
-                </ListItemSuffix>
-              </ListItem>
-              <ListItem>
-                <ListItemPrefix>
-                  <UserCircleIcon className="h-5 w-5" />
-                </ListItemPrefix>
-                Profile
-              </ListItem>
-              <ListItem>
-                <ListItemPrefix>
-                  <Cog6ToothIcon className="h-5 w-5" />
-                </ListItemPrefix>
-                Settings
-              </ListItem>
-              <ListItem>
-                <ListItemPrefix>
-                  <PowerIcon className="h-5 w-5" />
-                </ListItemPrefix>
-                Log Out
-              </ListItem>
             </List>
           </Card>
         </Drawer>

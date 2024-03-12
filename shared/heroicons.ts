@@ -9,7 +9,15 @@ import {
     PlusIcon,
     Square3Stack3DIcon,
     UserCircleIcon,
-    Cog6ToothIcon
+    Cog6ToothIcon,
+    DocumentArrowUpIcon,
+    EyeIcon,
+    DocumentIcon,
+    DocumentArrowDownIcon,
+    ArrowDownCircleIcon,
+    AdjustmentsHorizontalIcon,
+    ChevronRightIcon, ChevronDownIcon,
+    DocumentMagnifyingGlassIcon
 } from '@heroicons/react/24/outline'
 
 export {
@@ -21,5 +29,13 @@ export {
     PlusIcon,
     Square3Stack3DIcon,
     UserCircleIcon,
-    Cog6ToothIcon
+    Cog6ToothIcon,
+    DocumentArrowUpIcon,
+    EyeIcon,
+    DocumentIcon,
+    DocumentArrowDownIcon,
+    ArrowDownCircleIcon,
+    AdjustmentsHorizontalIcon,
+    ChevronRightIcon, ChevronDownIcon,
+    DocumentMagnifyingGlassIcon
 }

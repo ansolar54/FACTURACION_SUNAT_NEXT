@@ -47,7 +47,7 @@ export default function Cliente() {
 
     // VARIABLES PARA PAGINADO
     const [CurrentPage, setCurrentPage] = useState(1);
-    const Limit = 1;
+    const Limit = 10;
     const [TotalItems, setTotalItems] = useState(0);
     const totalPages = Math.ceil(TotalItems / Limit);
 
@@ -85,83 +85,89 @@ export default function Cliente() {
 
     function renderPageNumbers() {
         const pageNumbers = [];
-        if (totalPages <= 10) {
-            for (let i = 1; i <= totalPages; i++) {
-                pageNumbers.push(
-                    <IconButton
-                        className={`rounded-full ${i === CurrentPage ? 'color-bg-teal-500' : ''}`}
-                        key={i}
-                        variant={i === CurrentPage ? "filled" : "text"}
-                        size="sm"
-                        onClick={() => FunctionListarClientes(i, Campo1)}
-                    >
-                        {i}
-                    </IconButton>
-                );
-            }
+        const maxVisiblePages = 10; // Número máximo de páginas visibles
+        let startPage, endPage;
+
+        if (totalPages <= maxVisiblePages) {
+            startPage = 1;
+            endPage = totalPages;
         } else {
-            if (CurrentPage <= 5) {
-                for (let i = 1; i <= 7; i++) {
-                    pageNumbers.push(
-                        <IconButton
-                            className='rounded-full'
-                            key={i}
-                            variant={i === CurrentPage ? "filled" : "text"}
-                            size="sm"
-                            onClick={() => FunctionListarClientes(i, Campo1)}
-                        >
-                            {i}
-                        </IconButton>
-                    );
-                }
-                pageNumbers.push(
-                    <IconButton className='rounded-full' key="dots" variant="text" size="sm" disabled>
-                        ...
-                    </IconButton>
-                );
-                pageNumbers.push(
-                    <IconButton
-                        className='rounded-full '
-                        key={totalPages}
-                        variant={totalPages === CurrentPage ? "filled" : "text"}
-                        size="sm"
-                        onClick={() => FunctionListarClientes(totalPages, Campo1)}
-                    >
-                        {totalPages}
-                    </IconButton>
-                );
+            const maxPagesBeforeCurrentPage = Math.floor(maxVisiblePages / 2);
+            const maxPagesAfterCurrentPage = Math.ceil(maxVisiblePages / 2) - 1;
+
+            if (CurrentPage <= maxPagesBeforeCurrentPage) {
+                startPage = 1;
+                endPage = maxVisiblePages;
+            } else if (CurrentPage + maxPagesAfterCurrentPage >= totalPages) {
+                startPage = totalPages - maxVisiblePages + 1;
+                endPage = totalPages;
             } else {
-                pageNumbers.push(
-                    <IconButton
-                        className='rounded-full'
-                        key={1}
-                        variant={1 === CurrentPage ? "filled" : "text"}
-                        size="sm"
-                        onClick={() => FunctionListarClientes(1, Campo1)}
-                    >
-                        {1}
-                    </IconButton>
-                );
-                pageNumbers.push(
-                    <IconButton className='rounded-full' key="dots" variant="text" size="sm" disabled>
-                        ...
-                    </IconButton>
-                );
-                for (let i = totalPages - 6; i <= totalPages; i++) {
-                    pageNumbers.push(
-                        <IconButton
-                            className='rounded-full'
-                            key={i}
-                            variant={i === CurrentPage ? "filled" : "text"}
-                            size="sm"
-                            onClick={() => FunctionListarClientes(i, Campo1)}
-                        >
-                            {i}
-                        </IconButton>
-                    );
-                }
+                startPage = CurrentPage - maxPagesBeforeCurrentPage;
+                endPage = CurrentPage + maxPagesAfterCurrentPage;
             }
         }
+
+        if (startPage > 1) {
+            pageNumbers.push(
+                <IconButton
+                    className='rounded-full'
+                    key={1}
+                    variant={1 === CurrentPage ? "filled" : "text"}
+                    size="sm"
+                    onClick={() =>
+                        FunctionListarClientes(1, Campo1)
+                    }
+                //  functionListarDocumentos(1, campo1, fchDesde, fchHasta, idTipoDoc)
+                >
+                    {1}
+                </IconButton>
+            );
+            if (startPage > 2) {
+                pageNumbers.push(
+                    <IconButton className='rounded-full' key="dots-start" variant="text" size="sm" disabled>
+                        ...
+                    </IconButton>
+                );
+            }
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            pageNumbers.push(
+                <IconButton
+                    className={`rounded-full ${i === CurrentPage ? 'color-bg-teal-500' : ''}`}
+                    key={i}
+                    variant={i === CurrentPage ? "filled" : "text"}
+                    size="sm"
+                    onClick={() => 
+                        FunctionListarClientes(i, Campo1)
+                    }
+                >
+                    {i}
+                </IconButton>
+            );
+        }
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                pageNumbers.push(
+                    <IconButton className='rounded-full' key="dots-end" variant="text" size="sm" disabled>
+                        ...
+                    </IconButton>
+                );
+            }
+            pageNumbers.push(
+                <IconButton
+                    className='rounded-full'
+                    key={totalPages}
+                    variant={totalPages === CurrentPage ? "filled" : "text"}
+                    size="sm"
+                    onClick={() => FunctionListarClientes(totalPages, Campo1)}
+                >
+                    {totalPages}
+                </IconButton>
+            );
+        }
+
         return pageNumbers;
     }
 
@@ -200,7 +206,7 @@ export default function Cliente() {
         });
     }
 
-    const openEditUsuario = (id: number) => {
+    const functionOpenEditCliente = (id: number) => {
         const ObjectSeleccionado = ListadoCliente.find(item => item.Id === id);
         if (ObjectSeleccionado) {
             setSeleccionado(ObjectSeleccionado);
@@ -216,6 +222,7 @@ export default function Cliente() {
                 open={openAddCliente}
                 setOpen={setOpenAddCliente}
                 onListCliente={OnListClient}
+                onGuardarCliente={() => ({})}
             />
             <EditCliente
                 open={openEditCliente}
@@ -314,7 +321,7 @@ export default function Cliente() {
                                                     <IconButton
                                                         variant="text"
                                                         onClick={() => {
-                                                            openEditUsuario(item.Id),
+                                                            functionOpenEditCliente(item.Id),
                                                                 setToolTipEditId(null);
                                                         }}
                                                         onMouseOver={() => setToolTipEditId(item.Id)}

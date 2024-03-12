@@ -483,11 +483,11 @@ const EditEmpresa: React.FC<EditClienteProps> = ({
                                             label="ICBPER"
                                             onChange={(e) => {
                                                 const inputValue = e.target.value;
-                                                if (/^\d+(\.\d{0,2})?$/.test(inputValue)) {
+                                                if (/^\d{0,6}(\.\d{0,2})?$/.test(inputValue)) {
                                                     handleChange(e.target.name, inputValue)
                                                 }
                                             }}
-                                            maxLength={6}
+                                            maxLength={9}
                                         />
                                     </div>
                                     <div>

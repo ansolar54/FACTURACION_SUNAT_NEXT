@@ -19,7 +19,24 @@ import {
   TabsBody,
   TabPanel
 } from "@/shared/material-tailwind-component"
-export default function Factura() {
+
+interface DatosFactura {
+  condicionPago: string;
+  moneda: string;
+  fechaEmision: string;
+  fechaVencimiento: string;
+  vendedor: string;
+  guiaRemision: string;
+  nroPedido: string;
+  ordenCompra: string;
+  observacion: string;
+}
+
+interface FacturaProps {
+  onSendDataFactura: (dataFactura: DatosFactura) => void;
+}
+
+export default function Factura({ onSendDataFactura : onSendDataFactura }: FacturaProps) {
 
   const [condicionPago, setCondicionPago] = useState("Contado")
   const [moneda, setMoneda] = useState("USD")
@@ -41,6 +58,52 @@ export default function Factura() {
     { name: 'PEN', code: 'PEN' }
   ];
 
+  useEffect(() => {
+    const fechaActual = new Date().toISOString().split('T')[0];
+    setfechaEmision(fechaActual);
+    setfechaVencimiento(fechaActual)
+  }, []);
+
+  useEffect(() => {
+    const datosFactura: DatosFactura = {
+      condicionPago: condicionPago,
+      moneda: moneda,
+      fechaEmision: fechaEmision,
+      fechaVencimiento: fechaVencimiento,
+      vendedor: vendedor,
+      guiaRemision: guiaRemision,
+      nroPedido: nroPedido,
+      ordenCompra: ordenCompra,
+      observacion: observacion,
+    };
+    onSendDataFactura(datosFactura);
+  }, [condicionPago, moneda, fechaEmision, fechaVencimiento, vendedor, guiaRemision, nroPedido, ordenCompra, observacion]);
+
+  const handleChange = (name: string, value: any) => {
+    switch (name) {
+      case 'condicionPago':
+        setCondicionPago(value)
+        if (value === 'Contado') {
+          setfechaVencimiento(fechaEmision)
+        }
+        else {
+          setfechaVencimiento('')
+        }
+        break;
+      case "fechaEmision":
+        setfechaEmision(value);
+        if (value.length == 0) {
+          setfechaVencimiento("")
+        }
+        else if (value > fechaVencimiento) {
+          setfechaVencimiento("")
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
   return (
     <>
       <div className="grid grid-cols-5 gap-4">
@@ -52,7 +115,7 @@ export default function Factura() {
           value={condicionPago}
           key={condicionPago}
           onChange={(e) => {
-            setCondicionPago(e!)
+            handleChange('condicionPago', e)
           }}
         >
           {ListadoCondicionPago.map((tipo) => (
@@ -87,9 +150,8 @@ export default function Factura() {
           size="md"
           label="Fecha Emisión"
           onChange={(e) => {
-            setfechaEmision(e.target.value)
+            handleChange('fechaEmision', e.target.value)
           }}
-          maxLength={20}
         />
         <Input
           type='date'
@@ -102,7 +164,8 @@ export default function Factura() {
           onChange={(e) => {
             setfechaVencimiento(e.target.value)
           }}
-          maxLength={20}
+          disabled={condicionPago == "Contado" ? true : false}
+          min={fechaEmision}
         />
         <div>
           <Input
@@ -115,7 +178,7 @@ export default function Factura() {
             onChange={(e) => {
               setvendedor(e.target.value)
             }}
-            maxLength={20}
+            maxLength={200}
           />
         </div>
         <Input
@@ -128,7 +191,7 @@ export default function Factura() {
           onChange={(e) => {
             setguiaRemision(e.target.value)
           }}
-          maxLength={20}
+          maxLength={15}
         />
         <Input
           color='teal'
@@ -140,7 +203,7 @@ export default function Factura() {
           onChange={(e) => {
             setnroPedido(e.target.value)
           }}
-          maxLength={20}
+          maxLength={8}
         />
         <Input
           color='teal'
@@ -152,7 +215,7 @@ export default function Factura() {
           onChange={(e) => {
             setordenCompra(e.target.value)
           }}
-          maxLength={20}
+          maxLength={10}
         />
         <div className='col-span-2'>
           <Input
@@ -165,7 +228,7 @@ export default function Factura() {
             onChange={(e) => {
               setobservacion(e.target.value)
             }}
-            maxLength={20}
+            maxLength={200}
           />
         </div>
       </div>

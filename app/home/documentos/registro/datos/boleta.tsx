@@ -9,7 +9,7 @@ import {
 import { UserPlusIcon } from '@heroicons/react/24/outline'
 
 interface BoletaProps {
-    onSendDataBoleta: (datosBoleta: DatosBoleta) => void;
+    onSendDataBoleta: (dataBoleta: DatosBoleta) => void;
 }
 
 interface DatosBoleta {
