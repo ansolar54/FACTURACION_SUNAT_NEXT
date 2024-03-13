@@ -37,6 +37,7 @@ import AddProducto from './modal/add_producto';
 import EditProducto from './modal/edit_producto';
 import AddCliente, { Cliente_Add } from '../../administracion/cliente/modal/add_cliente';
 import { EnviarCorreo } from '@/services/correo';
+import NotaCredito from './datos/nota_credito';
 
 interface Cliente {
     Id: number,
@@ -1059,19 +1060,31 @@ export default function Registro() {
             <Toaster />
             <Card className='w-full rounded-none' color="white" shadow={true}>
                 <CardBody className="rounded-md pt-2 px-4">
+
+                    {/* DATOS DEL DOCUMENTO */}
                     <div className="justify-between flex gap-4">
                         <div className='flex gap-4'>
-                            <Chip variant="outlined" value="Datos del Cliente" className="rounded-lg py-3" color='teal' />
-                            <Button size="md" className="flex items-center gap-3 color-button"
-                                onClick={() =>
-                                    setOpenAddCliente(!openAddCliente)
-                                }
-                            >
-                                <UserPlusIcon strokeWidth={2} className='h-5 w-5' />
-                                AGREGAR CLIENTE
-                            </Button>
+                            <Chip variant="outlined" value="Datos del Documento" className="rounded-lg" color='teal' size="md" />
+                            <div>
+                                <Select
+                                    color='teal'
+                                    label="Tipo Documento"
+                                    name="Igv"
+                                    size="md"
+                                    value={IdTipoDocumento}
+                                    key={IdTipoDocumento}
+                                    onChange={(e) => {
+                                        handleChange('Id_Tipo_Doc', e)
+                                    }}
+                                >
+                                    {ListadoIdTipoDocu.map((tipo) => (
+                                        <Option key={tipo.Code} value={tipo.Code}>
+                                            {tipo.Name}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </div>
                         </div>
-
                         {IdTipoDocumento == '1' && (
                             <Chip color="teal" variant="ghost"
                                 value={`N° Factura : ${nroFactura}`}
@@ -1083,106 +1096,115 @@ export default function Registro() {
                                 className="rounded-lg py-3" />
                         )}
                     </div>
-                    <div className="my-4 flex flex-col gap-6">
-                        <div className="grid grid-cols-5 gap-4">
-                            <div>
-                                <Input
-                                    color='teal'
-                                    crossOrigin={undefined}
-                                    name="Nro_Doc"
-                                    value={NroDocumento_Cliente}
-                                    size="md"
-                                    label="N° Documento"
-                                    onChange={(e) => {
-                                        setNroDocumento_Cliente(e.target.value)
-                                        functionObtenerClienteByNroDoc(e.target.value)
-                                    }}
-                                    maxLength={20}
-                                />
-                            </div>
-                            <div>
-                                <Input
-                                    color='teal'
-                                    crossOrigin={undefined}
-                                    name="Nombre"
-                                    value={cliente.Nombre}
-                                    size="md"
-                                    label="Cliente"
-                                    maxLength={150}
-                                    className='cursor-not-allowed'
-                                    readOnly
-                                />
-                            </div>
-                            <div>
-                                <Input
-                                    color='teal'
-                                    crossOrigin={undefined}
-                                    name="Correo"
-                                    value={cliente.Correo}
-                                    size="md"
-                                    label="Correo"
-                                    maxLength={100}
-                                    className='cursor-not-allowed'
-                                    readOnly
-                                />
-                            </div>
-                            <div className='col-span-2'>
-                                <Input
-                                    color='teal'
-                                    crossOrigin={undefined}
-                                    name="Direccion"
-                                    value={cliente.Direccion}
-                                    size="md"
-                                    label="Dirección"
-                                    maxLength={150}
-                                    className='cursor-not-allowed'
-                                    readOnly
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="justify-start flex gap-4">
-                        <Chip variant="outlined" value="Datos del Documento" className="rounded-lg" color='teal' />
-                        <div>
-                            <Select
-                                color='teal'
-                                label="Tipo Documento"
-                                name="Igv"
-                                size="md"
-                                value={IdTipoDocumento}
-                                key={IdTipoDocumento}
-                                onChange={(e) => {
-                                    handleChange('Id_Tipo_Doc', e)
-                                }}
-                            >
-                                {ListadoIdTipoDocu.map((tipo) => (
-                                    <Option key={tipo.Code} value={tipo.Code}>
-                                        {tipo.Name}
-                                    </Option>
-                                ))}
-                            </Select>
-                        </div>
-                    </div>
-                    {/* DATOS DEL DOCUMENTO */}
-                    <div className='my-4 flex flex-col gap-6'>
+
+                    {/* CAMPOS DATOS DEL DOCUMENTO */}
                         {IdTipoDocumento == '1' && (
                             <Factura onSendDataFactura={handleDataFactura} />
                         )}
                         {IdTipoDocumento == '2' && (
                             <Boleta onSendDataBoleta={handleDataBoleta} />
                         )}
-                    </div>
+                        {IdTipoDocumento == '3' && (
+                            <NotaCredito />
+                        )}
+                    {/* DATOS DEL CLIENTE */}
+                    {IdTipoDocumento != '3' && (
+                        <div className="justify-between flex gap-4">
+                            <div className='flex gap-4'>
+                                <Chip variant="outlined" value="Datos del Cliente" className="rounded-lg py-3" color='teal' />
+                                <Button size="md" className="flex items-center gap-3 color-button"
+                                    onClick={() =>
+                                        setOpenAddCliente(!openAddCliente)
+                                    }
+                                >
+                                    <UserPlusIcon strokeWidth={2} className='h-5 w-5' />
+                                    AGREGAR CLIENTE
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* CAMPOS DATOS DEL CLIENTE */}
+                    {IdTipoDocumento != '3' && (
+                        <div className="my-4 flex flex-col gap-6">
+                            <div className="grid grid-cols-5 gap-4">
+                                <div>
+                                    <Input
+                                        color='teal'
+                                        crossOrigin={undefined}
+                                        name="Nro_Doc"
+                                        value={NroDocumento_Cliente}
+                                        size="md"
+                                        label="N° Documento"
+                                        onChange={(e) => {
+                                            setNroDocumento_Cliente(e.target.value)
+                                            functionObtenerClienteByNroDoc(e.target.value)
+                                        }}
+                                        maxLength={20}
+                                    />
+                                </div>
+                                <div>
+                                    <Input
+                                        color='teal'
+                                        crossOrigin={undefined}
+                                        name="Nombre"
+                                        value={cliente.Nombre}
+                                        size="md"
+                                        label="Cliente"
+                                        maxLength={150}
+                                        className='cursor-not-allowed'
+                                        readOnly
+                                    />
+                                </div>
+                                <div>
+                                    <Input
+                                        color='teal'
+                                        crossOrigin={undefined}
+                                        name="Correo"
+                                        value={cliente.Correo}
+                                        size="md"
+                                        label="Correo"
+                                        maxLength={100}
+                                        className='cursor-not-allowed'
+                                        readOnly
+                                    />
+                                </div>
+                                <div className='col-span-2'>
+                                    <Input
+                                        color='teal'
+                                        crossOrigin={undefined}
+                                        name="Direccion"
+                                        value={cliente.Direccion}
+                                        size="md"
+                                        label="Dirección"
+                                        maxLength={150}
+                                        className='cursor-not-allowed'
+                                        readOnly
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* DATOS DEL PRODUCTO */}
+                    {IdTipoDocumento != '3' && (
                     <div className="justify-start flex gap-4">
-                        <Chip variant="outlined" value="Datos del Producto" className="rounded-lg py-3" color='teal' />
-                        <Button size="md" className="flex items-center gap-3 color-button"
-                            onClick={() =>
-                                setOpenAddProducto(!openAddProducto)
-                            }
-                        >
-                            <PlusIcon strokeWidth={2} className='h-5 w-5' />
-                            AGREGAR PRODUCTO
-                        </Button>
+                        <Chip variant="outlined" value="Datos del PRODUCTO" className="rounded-lg" color='teal' size="md" />
+                        <div>
+                            <Button size="md" className="flex items-center gap-3 color-button"
+                                onClick={() =>
+                                    setOpenAddProducto(!openAddProducto)
+                                }
+                            >
+                                <PlusIcon strokeWidth={2} className='h-5 w-5' />
+                                AGREGAR PRODUCTO
+                            </Button>
+                        </div>
                     </div>
+                    )}
+
+                    {/* CAMPOS DE OPERACIONES PRODUCTO */}
+                    {IdTipoDocumento != '3' && (
                     <div className='my-4 flex flex-col gap-6'>
                         <div className="grid grid-cols-5 gap-4">
                             <div>
@@ -1279,6 +1301,10 @@ export default function Registro() {
                             </div>
                         </div>
                     </div>
+                    )}
+
+                    {/* BOTON ENVIO DE DOCUMENTO */}
+                    {IdTipoDocumento != '3' && (
                     <div className="justify-center flex gap-4">
                         <Button size="md" className="flex items-center gap-3 color-button"
                             onClick={() =>
@@ -1289,6 +1315,10 @@ export default function Registro() {
                             ENVIAR {IdTipoDocumento == '1' ? 'FACTURA' : 'BOLETA'}
                         </Button>
                     </div>
+                    )}
+
+                    {/* TABLA DE PRODUCTO */}
+                    {IdTipoDocumento != '3' && (
                     <div className="my-4 overflow-x-auto">
                         <table className="w-full min-w-max table-auto text-left rounded-lg overflow-hidden">
                             <thead>
@@ -1405,8 +1435,9 @@ export default function Registro() {
                             </tbody>
                         </table>
                     </div>
+                    )}
                 </CardBody>
-            </Card>
+            </Card >
         </>
     )
 }

@@ -41,7 +41,6 @@ interface Documento {
     Moneda: string,
     Importe_Total: number,
     Ruc_Empresa: string,
-
 }
 
 export default function page() {
@@ -59,6 +58,7 @@ export default function page() {
     const [fchHasta, setFchHasta] = useState("");
     const [idTipoDoc, setidTipoDoc] = useState(1);
 
+    // CAMPOS PARA PAGINADO
     const [CurrentPage, setCurrentPage] = useState(1);
     const Limit = 10;
     const [TotalItems, setTotalItems] = useState(0);

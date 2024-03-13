@@ -48,7 +48,8 @@ import {
   Switch,
   Collapse,
   cardBody,
-  Breadcrumbs
+  Breadcrumbs,
+  Radio
 } from "@material-tailwind/react";
 
 export {
@@ -99,5 +100,6 @@ export {
   Switch,  
   Collapse,
   cardBody,
-  Breadcrumbs
+  Breadcrumbs,
+  Radio
 }

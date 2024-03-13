@@ -6,7 +6,6 @@ import {
     Option,
     Button,
 } from "@/shared/material-tailwind-component"
-import { UserPlusIcon } from '@heroicons/react/24/outline'
 
 interface BoletaProps {
     onSendDataBoleta: (dataBoleta: DatosBoleta) => void;
@@ -43,40 +42,43 @@ export default function Boleta({ onSendDataBoleta: onSendDataBoleta }: BoletaPro
 
     return (
         <>
-            <div className="grid grid-cols-5 gap-4">
-                <Select
-                    color='teal'
-                    label="Moneda"
-                    name="moneda"
-                    size="md"
-                    value={moneda_B}
-                    key={moneda_B}
-                    onChange={(e) => {
-                        setMoneda_B(e!)
-                    }}
-                >
-                    {ListadoMonedas.map((tipo) => (
-                        <Option key={tipo.code} value={tipo.code}>
-                            {tipo.name}
-                        </Option>
-                    ))}
-                </Select>
-                <div>
-                    <Input
-                        type='date'
+            <div className='my-4 flex flex-col gap-6'>
+                <div className="grid grid-cols-5 gap-4">
+                    <Select
                         color='teal'
-                        crossOrigin={undefined}
-                        name="fechaEmision"
-                        value={fechaEmision_B}
+                        label="Moneda"
+                        name="moneda"
                         size="md"
-                        label="Fecha Emisión"
+                        value={moneda_B}
+                        key={moneda_B}
                         onChange={(e) => {
-                            setfechaEmision_B(e.target.value)
+                            setMoneda_B(e!)
                         }}
-                        maxLength={20}
-                    />
+                    >
+                        {ListadoMonedas.map((tipo) => (
+                            <Option key={tipo.code} value={tipo.code}>
+                                {tipo.name}
+                            </Option>
+                        ))}
+                    </Select>
+                    <div>
+                        <Input
+                            type='date'
+                            color='teal'
+                            crossOrigin={undefined}
+                            name="fechaEmision"
+                            value={fechaEmision_B}
+                            size="md"
+                            label="Fecha Emisión"
+                            onChange={(e) => {
+                                setfechaEmision_B(e.target.value)
+                            }}
+                            max='9999-12-31'
+                        />
+                    </div>
                 </div>
             </div>
+
         </>
     )
 }
