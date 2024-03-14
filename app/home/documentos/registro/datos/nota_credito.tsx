@@ -16,9 +16,13 @@ import { ObtenerTipo_NotaCredito } from '@/services/tipo_nota_credito';
 import { ObtenerListadoDocumentos } from '@/services/listado_documento';
 import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { ObtenerFacturaCliente } from '@/services/factura';
-import { GenerarXML_NotaCredito } from '@/services/nota_credito';
+import { EnviarNCredito, GenerarSerieCorrelativo_NotaCredito, GenerarXML_NotaCredito, ObtenerRutaNCredito, RegistrarNCredito } from '@/services/nota_credito';
 
 import toast, { Toaster } from 'react-hot-toast';
+import { ObtenerEmpresaAll } from '@/services/empresa';
+import Swal from 'sweetalert2';
+import { useRouter } from 'next/navigation';
+import Registro from '../page';
 
 type Body = {
     Id: number;
@@ -42,7 +46,18 @@ interface Result<T> {
     indicator: number
 }
 
-const NotaCredito = () => {
+interface NCreditoProps {
+    onSendDataNCredito: (dataNCredito: DatosNCredito) => void;
+    rucEmisor: string;
+}
+
+interface DatosNCredito {
+    nroNotaCredito: string
+}
+
+export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoProps) {
+    //ROUTER
+    const router = useRouter()
 
     const TABLE_HEAD = ["N° Documento", "Cliente", "Fecha Emisión", "Importe Total", "Acción"];
 
@@ -57,19 +72,30 @@ const NotaCredito = () => {
 
     // SELECT - LISTADO TIPO NOTA CREDITO
     const [listadoTipoNotaCredito, setlistadoTipoNotaCredito] = useState<Body[]>([]);
+    const [tipoSeleccionado, setTipoSeleccionado] = useState<Body>({ Id: 0, Nombre: '' });
+
+    const [Id_Tipo_Nota_Credito, setId_Tipo_Nota_Credito] = useState("")
 
     // RADIO BUTTON 1 = FACTURA // 2 = BOLETA
     const [Id_Tipo_Documento, setIdTipoDocumento] = useState(1);
 
+    // CAMPOS DE REGISTRO NOTA CREDITO
     const [fechaEmision, setfechaEmision] = useState("");
-    const [Id_Tipo_Nota_Credito, setId_Tipo_Nota_Credito] = useState("")
     const [numeroFE, setNumeroFE] = useState("");
+    const [Id_Documento, setId_Documento] = useState(0);
+    const [motivo, setMotivo] = useState("");
+
+    // CAMPOS NOTA CREDITO
+    const [nroNotaCredito, setnroNotaCredito] = useState("");
+    const [serieNC, setserieNC] = useState("");
+    const [correlativoNC, setcorrelativoNC] = useState("");
     const [Id_Cliente, setId_Cliente] = useState(0);
 
     // CAMPO PARA FILTRAR DOCUMENTOS
     const [numeroDocumento, setNumeroDocumento] = useState("");
 
     useEffect(() => {
+        functionGenerarCorrelativo_NC(rucEmisor, 1)
         const fechaActual = new Date().toISOString().split('T')[0];
         setfechaEmision(fechaActual);
         ObtenerTipo_NotaCredito(1).then((result: any) => {
@@ -80,6 +106,32 @@ const NotaCredito = () => {
     useEffect(() => {
         functionListarDocumentos(1, numeroDocumento, Id_Tipo_Documento);
     }, [])
+
+    useEffect(() => {
+        const dataNCredito: DatosNCredito = {
+            nroNotaCredito: nroNotaCredito
+        };
+        onSendDataNCredito(dataNCredito);
+    }, [nroNotaCredito]);
+
+    const formatNumber = (value: any) => {
+        const formattedNumber = value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return formattedNumber;
+    };
+
+    function formatFecha(fecha: any) {
+        const dateObject = new Date(fecha);
+        const dia = dateObject.getDate().toString().padStart(2, '0');
+        const mes = (dateObject.getMonth() + 1).toString().padStart(2, '0');
+        const anio = dateObject.getFullYear();
+        const fechaFormateada = `${dia}-${mes}-${anio}`;
+        return fechaFormateada;
+    }
+
+    const numeroConCeros = (num: number): string => {
+        const numString = num.toString();
+        return numString.length < 2 ? `0${numString}` : numString;
+    };
 
     function functionListarDocumentos(page: number, campo1: string, idTipoDoc: number) {
         ObtenerListadoDocumentos(campo1, '', '', idTipoDoc, Limit, page).then((result: any) => {
@@ -94,35 +146,27 @@ const NotaCredito = () => {
         })
     }
 
-    function functionClicRadio(value: any) {
-        setIdTipoDocumento(value)
-        let idTipoNC = 0
-        if (value == 1) {
-            idTipoNC = 1
-        }
-        else {
-            idTipoNC = 2
-        }
-        functionListarDocumentos(1, '', value);
-        setNumeroDocumento('');
-        ObtenerTipo_NotaCredito(idTipoNC).then((result: any) => {
-            setlistadoTipoNotaCredito(result.data)
-            console.log(result)
+    function functionGenerarCorrelativo_NC(rucEmisor: string, tipo_doc_sunat: number) {
+        GenerarSerieCorrelativo_NotaCredito(rucEmisor, tipo_doc_sunat).then((result: any) => {
+            if (result.indicator == 1) {
+                const { correlativo, serie } = result.data;
+                setcorrelativoNC(correlativo);
+                setserieNC(serie);
+                setnroNotaCredito(serie + "-" + correlativo);
+            }
         })
     }
 
-    const formatNumber = (value: any) => {
-        const formattedNumber = value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        return formattedNumber;
-    };
+    function functionClicRadio(value: number) {
+        setIdTipoDocumento(value)
+        setNumeroDocumento('');
+        setNumeroFE('')
 
-    function formatFecha(fecha: any) {
-        const dateObject = new Date(fecha);
-        const dia = dateObject.getDate().toString().padStart(2, '0');
-        const mes = (dateObject.getMonth() + 1).toString().padStart(2, '0');
-        const anio = dateObject.getFullYear();
-        const fechaFormateada = `${dia}-${mes}-${anio}`;
-        return fechaFormateada;
+        functionGenerarCorrelativo_NC(rucEmisor, value)
+        functionListarDocumentos(1, '', value);
+        ObtenerTipo_NotaCredito(value).then((result: any) => {
+            setlistadoTipoNotaCredito(result.data)
+        })
     }
 
     function renderPageNumbers() {
@@ -210,6 +254,7 @@ const NotaCredito = () => {
     function functionSeleccionarDocumento(item: any) {
         setNumeroFE(item.Nro_Documento)
         setId_Cliente(item.Id_Cliente)
+        setId_Documento(item.Id)
     }
 
     async function functionArmarXML(Nro_Documento: string, Id_Cliente: number) {
@@ -238,11 +283,13 @@ const NotaCredito = () => {
 
             let NC_factura_xml = {
                 Ruc_Emisor: dataFacturaCliente.Ruc_Empresa,
-                Nro_Documento: dataFacturaCliente.Nro_Documento,
+                Nro_Documento: nroNotaCredito,
+                Nro_Documento_Modifica: numeroFE,
                 Cliente: dataFacturaCliente.Cliente,
                 Nro_Doc_Cliente: dataFacturaCliente.Nro_Doc_Cliente,
-                Tipo_Nota_Credito: Id_Tipo_Nota_Credito,
-                Tipo_Documento: Id_Tipo_Documento,
+                Tipo_Nota_Credito: numeroConCeros(tipoSeleccionado.Id),
+                Descripcion_Tipo_Nota_Credito: tipoSeleccionado.Nombre,
+                Tipo_Documento: Id_Tipo_Documento == 1 ? '01' : '03',
                 Tipo_Docu_Ref: '',
                 Tipo_Addi_Docu_Ref: '',
                 Fecha_Emision: fechaEmision,
@@ -260,33 +307,99 @@ const NotaCredito = () => {
 
             console.log(NC_factura_xml);
 
-            // GenerarXML_NotaCredito(NC_factura_xml).then((result: any) => {
-            //     if (result.indicator == 1) {
-            //         toast.success(
-            //             `${result.message}`, {
-            //             duration: 2000,
-            //             position: 'top-center',
-            //         });
-            //         // setTimeout(FunctionEnviarBoleta, 2000)
-            //     }
-            //     else {
-            //         toast.error(
-            //             `${result.message}`, {
-            //             duration: 3000,
-            //             position: 'top-center',
-            //         });
-            //     }
-            //     console.log(result)
-            // })
+            GenerarXML_NotaCredito(NC_factura_xml).then((result: any) => {
+                if (result.indicator == 1) {
+                    toast.success(
+                        `${result.message}`, {
+                        duration: 2000,
+                        position: 'top-center',
+                    });
+                    setTimeout(functionEnviarNCredito, 2000)
+                }
+                else {
+                    toast.error(
+                        `${result.message}`, {
+                        duration: 3000,
+                        position: 'top-center',
+                    });
+                }
+                console.log(result)
+            })
         }
+    }
+
+    async function functionEnviarNCredito() {
+        let ruta_zip = "";
+        ObtenerRutaNCredito(nroNotaCredito, rucEmisor).then((result_2: any) => {
+            if (result_2.indicator == 1) {
+                ruta_zip = result_2.data.ruta
+                ruta_zip.replace("\\\\", "\\");
+                // console.log("ruta_zip", ruta_zip)
+                EnviarNCredito(ruta_zip).then((result_3: any) => {
+                    if (result_3.indicator == 1) {
+                        toast.success(
+                            `${result_3.message}`, {
+                            duration: 2000,
+                            position: 'top-center',
+                        });
+                        setTimeout(FunctionRegistrarNCredito, 2000)
+                    }
+                    else {
+                        toast.error(
+                            `${result_3.message}`, {
+                            duration: 3000,
+                            position: 'top-center',
+                        });
+                    }
+                })
+            }
+            else {
+                toast.error(
+                    `${result_2.message}`, {
+                    duration: 3000,
+                    position: 'top-center',
+                });
+            }
+        })
+    }
+
+    function FunctionRegistrarNCredito() {
+        let modal_ncredito = {
+            Fecha_Emision: fechaEmision,
+            Id_Tipo: tipoSeleccionado.Id,
+            Id_Documento: Id_Documento,
+            Nro_Documento: nroNotaCredito,
+            Motivo: motivo,
+            Serie: serieNC,
+            Correlativo: correlativoNC,
+            Tipo_Doc_Suant: Id_Tipo_Documento
+        }
+
+        RegistrarNCredito(modal_ncredito).then((result: any) => {
+            if (result.indicator == 1) {
+                toast.success(
+                    `${result.message}`, {
+                    duration: 2000,
+                    position: 'top-center',
+                });
+                functionGenerarCorrelativo_NC(rucEmisor, Id_Tipo_Documento)
+            }
+            else {
+                toast.error(
+                    `${result.message}`, {
+                    duration: 3000,
+                    position: 'top-center',
+                });
+            }
+        })
     }
 
     return (
         <>
             <Toaster />
             <div className="justify-start flex gap-4 pt-1">
-                <Radio crossOrigin={undefined} name="type" label="Factura" color="teal" value={1} onChange={(e) => functionClicRadio(e.target.value)} defaultChecked />
-                <Radio crossOrigin={undefined} name="type" label="Boleta" color="teal" value={2} onChange={(e) => functionClicRadio(e.target.value)} />
+                <Radio crossOrigin={undefined} name="type" label="Factura" color="teal" value={1} onChange={(e) => functionClicRadio(Number(e.target.value))} defaultChecked />
+                <Radio crossOrigin={undefined} name="type" label="Boleta" color="teal" value={2} onChange={(e) => functionClicRadio(Number(e.target.value))} />
             </div>
             <div className='my-4 flex flex-col gap-6'>
                 <div className="grid grid-cols-5 gap-4">
@@ -309,12 +422,15 @@ const NotaCredito = () => {
                         <Select
                             color='teal'
                             label="Tipo Nota Crédito"
-                            name="Id_Tipo_Nota_Credito"
+                            // name="Id_Tipo_Nota_Credito"
                             size="md"
-                            value={Id_Tipo_Nota_Credito.toString()}
-                            key={Id_Tipo_Nota_Credito}
+                            value={tipoSeleccionado.Id.toString()}
+                            key={tipoSeleccionado.Id}
                             onChange={(e) => {
-                                setId_Tipo_Nota_Credito((e!))
+                                const tipo = listadoTipoNotaCredito.find(t => t.Id == Number(e));
+                                if (tipo) {
+                                    setTipoSeleccionado(tipo);
+                                }
                             }}
                         >
                             {listadoTipoNotaCredito.map((tipo) => (
@@ -336,21 +452,34 @@ const NotaCredito = () => {
                             label="N° FE"
                         />
                     </div>
-                    <div>
-                        <Button
+                    <div className='col-span-2'>
+                        <Input
+                            color='teal'
+                            crossOrigin={undefined}
+                            name="motivo"
+                            value={motivo}
                             size="md"
-                            color={numeroFE && Id_Tipo_Nota_Credito && fechaEmision ? "teal" : "blue-gray"}
-                            disabled={!numeroFE || !Id_Tipo_Nota_Credito || !fechaEmision}
-                            // className="!absolute right-1 top-1 rounded"
-                            onClick={() => functionArmarXML(numeroFE, Id_Cliente)}
-                        >
-                            ENVIAR NOTA CRÉDITO
-                        </Button>
+                            label="Motivo o Sustento"
+                            onChange={(e) => {
+                                setMotivo(e.target.value)
+                            }}
+                        />
                     </div>
                 </div>
             </div>
+            <div className="justify-center flex gap-4">
+                <Button
+                    size="md"
+                    color={numeroFE && tipoSeleccionado.Id && fechaEmision && motivo ? "teal" : "blue-gray"}
+                    disabled={!numeroFE || !tipoSeleccionado.Id || !fechaEmision || !motivo}
+                    // className="!absolute right-1 top-1 rounded"
+                    onClick={() => functionArmarXML(numeroFE, Id_Cliente)}
+                >
+                    ENVIAR NOTA CRÉDITO
+                </Button>
+            </div>
             <div className='flex flex-col gap-6'>
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-5 gap-4">
                     <div className="relative flex w-full max-w-[24rem]">
                         <Input
                             color='teal'
@@ -370,7 +499,7 @@ const NotaCredito = () => {
                             className="!absolute right-1 top-1 rounded"
                             onClick={() => functionListarDocumentos(1, numeroDocumento, Id_Tipo_Documento)}
                         >
-                            Buscar Documento
+                            Buscar
                         </Button>
                     </div>
 
@@ -465,5 +594,3 @@ const NotaCredito = () => {
         </>
     )
 }
-
-export default NotaCredito
