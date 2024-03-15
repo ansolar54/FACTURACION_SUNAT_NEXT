@@ -41,6 +41,7 @@ interface Documento {
     Moneda: string,
     Importe_Total: number,
     Ruc_Empresa: string,
+    Estado: string,
 }
 
 export default function page() {
@@ -48,15 +49,17 @@ export default function page() {
     //ROUTER
     const router = useRouter()
 
-    const TABLE_HEAD = ["N° Documento", "Cliente", "Fecha Emisión", "Importe Total", "Rpta. SUNAT (CDR)", "Acción"];
+    const TABLE_HEAD = ["N° Documento", "Cliente", "Fecha Emisión", "Importe Total", "Rpta. SUNAT (CDR)", "Estado","Acción"];
 
     const [ListadoDocumento, setListadoDocumento] = useState<Documento[]>([]);
 
     // CAMPOS EN PANTALLA
     const [campo1, setCampo1] = useState("");
+    const [estado, setEstado] = useState(2);
     const [fchDesde, setFchDesde] = useState("");
     const [fchHasta, setFchHasta] = useState("");
     const [idTipoDoc, setidTipoDoc] = useState(1);
+
 
     // CAMPOS PARA PAGINADO
     const [CurrentPage, setCurrentPage] = useState(1);
@@ -69,6 +72,12 @@ export default function page() {
         { name: 'BOLETA', code: '2' },
     ];
 
+    const tipoEstado = [
+        { name: 'TODOS', code: '2' },
+        { name: 'ACTIVO', code: '1' },
+        { name: 'ANULADO', code: '0' },
+    ];
+
     // CONST PARA TOOLTIP_ID
     const [ToolTipEditId, setToolTipEditId] = useState<number | null>(null);
     const [ToolTipDeleteId, setToolTipDeleteId] = useState<number | null>(null);
@@ -79,8 +88,8 @@ export default function page() {
         functionObtenerEmpresa();
     }, [])
 
-    function functionListarDocumentos(page: number, campo1: string, fch_desde: string, fch_hasta: string, idTipoDoc: number) {
-        ObtenerListadoDocumentos(campo1, fch_desde, fch_hasta, idTipoDoc, Limit, page).then((result: any) => {
+    function functionListarDocumentos(page: number, campo1: string, fch_desde: string, fch_hasta: string, idTipoDoc: number, estado: number) {
+        ObtenerListadoDocumentos(campo1, fch_desde, fch_hasta, idTipoDoc, Limit, page, estado).then((result: any) => {
             if (result.indicator == 1) {
                 setListadoDocumento(result.data);
                 setCurrentPage(page);
@@ -98,7 +107,7 @@ export default function page() {
 
         ObtenerEmpresaAll().then((result_empresa: any) => {
             if (result_empresa.indicator == 1) {
-                functionListarDocumentos(1, '', fechaActual, '', 1)
+                functionListarDocumentos(CurrentPage, '', fechaActual, '', idTipoDoc, estado)
             }
             else {
                 Swal.fire({
@@ -163,7 +172,7 @@ export default function page() {
                     key={1}
                     variant={1 === CurrentPage ? "filled" : "text"}
                     size="sm"
-                    onClick={() => functionListarDocumentos(1, campo1, fchDesde, fchHasta, idTipoDoc)}
+                    onClick={() => functionListarDocumentos(1, campo1, fchDesde, fchHasta, idTipoDoc,estado)}
                 >
                     {1}
                 </IconButton>
@@ -184,7 +193,7 @@ export default function page() {
                     key={i}
                     variant={i === CurrentPage ? "filled" : "text"}
                     size="sm"
-                    onClick={() => functionListarDocumentos(i, campo1, fchDesde, fchHasta, idTipoDoc)}
+                    onClick={() => functionListarDocumentos(i, campo1, fchDesde, fchHasta, idTipoDoc, estado)}
                 >
                     {i}
                 </IconButton>
@@ -205,7 +214,7 @@ export default function page() {
                     key={totalPages}
                     variant={totalPages === CurrentPage ? "filled" : "text"}
                     size="sm"
-                    onClick={() => functionListarDocumentos(totalPages, campo1, fchDesde, fchHasta, idTipoDoc)}
+                    onClick={() => functionListarDocumentos(totalPages, campo1, fchDesde, fchHasta, idTipoDoc, estado)}
                 >
                     {totalPages}
                 </IconButton>
@@ -406,7 +415,7 @@ export default function page() {
             <Card className='w-full rounded-none' color="white" shadow={true}>
                 <CardBody className="rounded-md pt-2 px-4">
                     <div className="my-4 flex flex-col gap-6">
-                        <div className="grid grid-cols-4 gap-4">
+                        <div className="grid grid-cols-5 gap-4">
                             <Select
                                 color='teal'
                                 label="Tipo Documento"
@@ -415,10 +424,27 @@ export default function page() {
                                 value={idTipoDoc.toString()}
                                 onChange={(e) => {
                                     setidTipoDoc(Number(e))
-                                    functionListarDocumentos(1, campo1, fchDesde, fchHasta, Number(e))
+                                    functionListarDocumentos(1, campo1, fchDesde, fchHasta, Number(e), estado)
                                 }}
                             >
                                 {tipoDocu.map((tipo) => (
+                                    <Option key={tipo.code} value={tipo.code}>
+                                        {tipo.name}
+                                    </Option>
+                                ))}
+                            </Select>
+                            <Select
+                                color='teal'
+                                label="Estado"
+                                name="moneda"
+                                size="md"
+                                value={estado.toString()}
+                                onChange={(e) => {
+                                    setEstado(Number(e))
+                                    functionListarDocumentos(1, campo1, fchDesde, fchHasta, idTipoDoc, Number(e))
+                                }}
+                            >
+                                {tipoEstado.map((tipo) => (
                                     <Option key={tipo.code} value={tipo.code}>
                                         {tipo.name}
                                     </Option>
@@ -434,7 +460,7 @@ export default function page() {
                                     value={campo1}
                                     onChange={(e) => {
                                         setCampo1(e.target.value);
-                                        functionListarDocumentos(1, e.target.value, fchDesde, fchHasta, idTipoDoc)
+                                        functionListarDocumentos(1, e.target.value, fchDesde, fchHasta, idTipoDoc, estado)
                                     }}
                                 />
                             </div>
@@ -455,7 +481,7 @@ export default function page() {
                                         else if (e.target.value > fchHasta) {
                                             setFchHasta("")
                                         }
-                                        functionListarDocumentos(1, campo1, e.target.value, fchHasta, idTipoDoc)
+                                        functionListarDocumentos(1, campo1, e.target.value, fchHasta, idTipoDoc, estado)
                                     }}
                                 />
                             </div>
@@ -470,7 +496,7 @@ export default function page() {
                                     label="Fch. Emi. Hasta"
                                     onChange={(e) => {
                                         setFchHasta(e.target.value)
-                                        functionListarDocumentos(1, campo1, fchDesde, e.target.value, idTipoDoc)
+                                        functionListarDocumentos(1, campo1, fchDesde, e.target.value, idTipoDoc, estado)
                                     }}
                                     min={fchDesde}
                                     max='9999-12-31'
@@ -522,11 +548,21 @@ export default function page() {
                                             </Typography>
                                         </td>
                                         <td className="p-2">
-                                            <div 
-                                            // className='flex justify-center'
-                                            className='w-20'
+                                            <div
+                                                // className='flex justify-center'
+                                                className='w-20'
                                             >
-                                                <Chip color="green" variant="outlined" value="ACEPTADA" className='justify-center'/>
+                                                <Chip color="green" variant="outlined" value="ACEPTADA" className='justify-center' />
+                                            </div>
+                                        </td>
+                                        <td className="p-2">
+                                            <div
+                                                // className='flex justify-center'
+                                                className='w-20'
+                                            >
+                                                <Chip 
+                                                color={item.Estado == '1' ? 'green' : 'red'}
+                                                 variant="outlined" value={item.Estado == '0' ? 'ANULADA' : 'ACTIVA'} className='justify-center' />
                                             </div>
                                         </td>
                                         <td className="p-2">
@@ -625,7 +661,7 @@ export default function page() {
                             className={`flex items-center gap-2 rounded-full ${CurrentPage === 1 ? 'cursor-not-allowed text-gray-500' : ''}`}
                             onClick={() => {
                                 if (CurrentPage !== 1) {
-                                    functionListarDocumentos(CurrentPage - 1, campo1, fchDesde, fchHasta, idTipoDoc);
+                                    functionListarDocumentos(CurrentPage - 1, campo1, fchDesde, fchHasta, idTipoDoc,estado);
                                 }
                             }}
                         >
@@ -639,7 +675,7 @@ export default function page() {
                             className={`flex items-center gap-2 rounded-full ${CurrentPage === totalPages ? 'cursor-not-allowed text-gray-500' : ''}`}
                             onClick={() => {
                                 if (CurrentPage !== totalPages) {
-                                    functionListarDocumentos(CurrentPage + 1, campo1, fchDesde, fchHasta, idTipoDoc);
+                                    functionListarDocumentos(CurrentPage + 1, campo1, fchDesde, fchHasta, idTipoDoc, estado);
                                 }
                             }
                             }

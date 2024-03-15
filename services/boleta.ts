@@ -114,7 +114,7 @@ export function GuardarBoleta(req : any) {
   });
 }
 
-export function ObtenerBoletaCliente(nro_boleta: string, id_cliente: string) {
+export function ObtenerBoletaCliente(nro_boleta: string, id_cliente: number) {
   const base = process.env.NEXT_PUBLIC_API_ROOT_IIS;
   let BaseUrl = base + API_CONTROLLER + "/get_boleta?nro_boleta=" + nro_boleta +
     "&id_cliente=" + id_cliente;

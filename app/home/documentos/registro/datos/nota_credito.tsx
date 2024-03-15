@@ -13,7 +13,7 @@ import {
     CardFooter,
 } from "@/shared/material-tailwind-component"
 import { ObtenerTipo_NotaCredito } from '@/services/tipo_nota_credito';
-import { ObtenerListadoDocumentos } from '@/services/listado_documento';
+import { ModificarEstadoDocumento, ObtenerListadoDocumentos } from '@/services/listado_documento';
 import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { ObtenerFacturaCliente } from '@/services/factura';
 import { EnviarNCredito, GenerarSerieCorrelativo_NotaCredito, GenerarXML_NotaCredito, ObtenerRutaNCredito, RegistrarNCredito } from '@/services/nota_credito';
@@ -23,6 +23,7 @@ import { ObtenerEmpresaAll } from '@/services/empresa';
 import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
 import Registro from '../page';
+import { ObtenerBoletaCliente } from '@/services/boleta';
 
 type Body = {
     Id: number;
@@ -39,6 +40,7 @@ interface Documento {
     Moneda: string,
     Importe_Total: number,
     Ruc_Empresa: string,
+    Estado: string,
 }
 
 interface Result<T> {
@@ -59,7 +61,7 @@ export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoP
     //ROUTER
     const router = useRouter()
 
-    const TABLE_HEAD = ["N° Documento", "Cliente", "Fecha Emisión", "Importe Total", "Acción"];
+    const TABLE_HEAD = ["N° Documento", "Cliente", "Fecha Emisión", "Importe Total", "Estado","Acción"];
 
     // TABLE - LISTADO DOCUMENTO
     const [ListadoDocumento, setListadoDocumento] = useState<Documento[]>([]);
@@ -134,7 +136,7 @@ export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoP
     };
 
     function functionListarDocumentos(page: number, campo1: string, idTipoDoc: number) {
-        ObtenerListadoDocumentos(campo1, '', '', idTipoDoc, Limit, page).then((result: any) => {
+        ObtenerListadoDocumentos(campo1, '', '', idTipoDoc, Limit, page, 2).then((result: any) => {
             if (result.indicator == 1) {
                 setListadoDocumento(result.data);
                 setCurrentPage(page);
@@ -258,74 +260,133 @@ export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoP
     }
 
     async function functionArmarXML(Nro_Documento: string, Id_Cliente: number) {
-        const result_1 = await ObtenerFacturaCliente(Nro_Documento, Id_Cliente) as Result<any>;
-        const dataFacturaCliente = result_1.data;
-        // console.log(dataFacturaCliente)
-        if (result_1.indicator == 1) {
 
-            let data_detail_xml = [];
+        let NC_factura_xml = {}
 
-            for (let i = 0; i < dataFacturaCliente.DetalleDocumento.length; i++) {
-                const element = dataFacturaCliente.DetalleDocumento[i];
-                let model_detail = {
-                    Id: element.Id,
-                    Tipo_Tributo: element.Tipo_Tributo,
-                    Codigo_Producto: element.Codigo_Producto,
-                    Descripcion: element.Descripcion,
-                    Cantidad: element.Cantidad,
-                    Unidad_Medida: element.Unidad_Medida,
-                    Precio_Unitario: element.Precio_Unitario,
-                    Valor_Unitario: element.Valor_Unitario,
-                    Valor_Item: element.Valor_Item
-                };
-                data_detail_xml.push(model_detail);
-            }
+        if (Id_Tipo_Documento == 1) {
+            const result_1 = await ObtenerFacturaCliente(Nro_Documento, Id_Cliente) as Result<any>;
+            const dataFacturaCliente = result_1.data;
+            // console.log(dataFacturaCliente)
+            if (result_1.indicator == 1) {
 
-            let NC_factura_xml = {
-                Ruc_Emisor: dataFacturaCliente.Ruc_Empresa,
-                Nro_Documento: nroNotaCredito,
-                Nro_Documento_Modifica: numeroFE,
-                Cliente: dataFacturaCliente.Cliente,
-                Nro_Doc_Cliente: dataFacturaCliente.Nro_Doc_Cliente,
-                Tipo_Nota_Credito: numeroConCeros(tipoSeleccionado.Id),
-                Descripcion_Tipo_Nota_Credito: tipoSeleccionado.Nombre,
-                Tipo_Documento: Id_Tipo_Documento == 1 ? '01' : '03',
-                Tipo_Docu_Ref: '',
-                Tipo_Addi_Docu_Ref: '',
-                Fecha_Emision: fechaEmision,
-                Moneda: dataFacturaCliente.Moneda,
-                Op_Gravadas: dataFacturaCliente.Op_Gravadas,
-                Op_Inafectas: dataFacturaCliente.Op_Inafectas,
-                Op_Exonerada: dataFacturaCliente.Op_Exonerada,
-                Descuentos: dataFacturaCliente.Descuentos,
-                Anticipos: dataFacturaCliente.Anticipos,
-                Igv: dataFacturaCliente.Igv,
-                Igv_Percent: parseFloat(dataFacturaCliente.Igv_Percent),
-                Importe_Total: dataFacturaCliente.Importe_Total,
-                DetalleDocumento: data_detail_xml
-            }
+                let data_detail_xml = [];
 
-            console.log(NC_factura_xml);
-
-            GenerarXML_NotaCredito(NC_factura_xml).then((result: any) => {
-                if (result.indicator == 1) {
-                    toast.success(
-                        `${result.message}`, {
-                        duration: 2000,
-                        position: 'top-center',
-                    });
-                    setTimeout(functionEnviarNCredito, 2000)
+                for (let i = 0; i < dataFacturaCliente.DetalleDocumento.length; i++) {
+                    const element = dataFacturaCliente.DetalleDocumento[i];
+                    let model_detail = {
+                        Id: element.Id,
+                        Tipo_Tributo: element.Tipo_Tributo,
+                        Codigo_Producto: element.Codigo_Producto,
+                        Descripcion: element.Descripcion,
+                        Cantidad: element.Cantidad,
+                        Unidad_Medida: element.Unidad_Medida,
+                        Precio_Unitario: element.Precio_Unitario,
+                        Valor_Unitario: element.Valor_Unitario,
+                        Valor_Item: element.Valor_Item
+                    };
+                    data_detail_xml.push(model_detail);
                 }
-                else {
-                    toast.error(
-                        `${result.message}`, {
-                        duration: 3000,
-                        position: 'top-center',
-                    });
+
+                NC_factura_xml = {
+                    Ruc_Emisor: dataFacturaCliente.Ruc_Empresa,
+                    Nro_Documento: nroNotaCredito,
+                    Nro_Documento_Modifica: numeroFE,
+                    Cliente: dataFacturaCliente.Cliente,
+                    Id_Nro_Doc_Cliente: dataFacturaCliente.codigo_tipo_doc_cliente,
+                    Nro_Doc_Cliente: dataFacturaCliente.Nro_Doc_Cliente,
+                    Tipo_Nota_Credito: numeroConCeros(tipoSeleccionado.Id),
+                    Descripcion_Tipo_Nota_Credito: tipoSeleccionado.Nombre,
+                    Tipo_Documento: '01',
+                    Tipo_Docu_Ref: '',
+                    Tipo_Addi_Docu_Ref: '',
+                    Fecha_Emision: fechaEmision,
+                    Moneda: dataFacturaCliente.Moneda,
+                    Op_Gravadas: dataFacturaCliente.Op_Gravadas,
+                    Op_Inafectas: dataFacturaCliente.Op_Inafectas,
+                    Op_Exonerada: dataFacturaCliente.Op_Exonerada,
+                    Descuentos: dataFacturaCliente.Descuentos,
+                    Anticipos: dataFacturaCliente.Anticipos,
+                    Igv: dataFacturaCliente.Igv,
+                    Igv_Percent: parseFloat(dataFacturaCliente.Igv_Percent),
+                    Importe_Total: dataFacturaCliente.Importe_Total,
+                    DetalleDocumento: data_detail_xml
                 }
-                console.log(result)
-            })
+            }
         }
+
+        else if (Id_Tipo_Documento == 2) {
+            const result_1 = await ObtenerBoletaCliente(Nro_Documento, Id_Cliente) as Result<any>;
+            const dataBoletaCliente = result_1.data;
+            // console.log(dataBoletaCliente)
+
+            if (result_1.indicator == 1) {
+                let data_detail_xml = [];
+
+                for (let i = 0; i < dataBoletaCliente.DetalleDocumento.length; i++) {
+                    const element = dataBoletaCliente.DetalleDocumento[i];
+                    let model_detail = {
+                        Id: element.Id,
+                        Tipo_Tributo: element.Tipo_Tributo,
+                        Codigo_Producto: element.Codigo_Producto,
+                        Descripcion: element.Descripcion,
+                        Cantidad: element.Cantidad,
+                        Unidad_Medida: element.Unidad_Medida,
+                        Precio_Unitario: element.Precio_Unitario,
+                        Valor_Unitario: element.Valor_Unitario,
+                        Valor_Item: element.Valor_Item
+                    };
+                    data_detail_xml.push(model_detail);
+                }
+
+                NC_factura_xml = {
+                    Ruc_Emisor: dataBoletaCliente.Ruc_Empresa,
+                    Nro_Documento: nroNotaCredito,
+                    Nro_Documento_Modifica: numeroFE,
+                    Cliente: dataBoletaCliente.Cliente,
+                    Id_Nro_Doc_Cliente: dataBoletaCliente.codigo_tipo_doc_cliente,
+                    Nro_Doc_Cliente: dataBoletaCliente.Nro_Doc_Cliente,
+                    Tipo_Nota_Credito: numeroConCeros(tipoSeleccionado.Id),
+                    Descripcion_Tipo_Nota_Credito: tipoSeleccionado.Nombre,
+                    Tipo_Documento: '03',
+                    Tipo_Docu_Ref: '',
+                    Tipo_Addi_Docu_Ref: '',
+                    Fecha_Emision: fechaEmision,
+                    Moneda: dataBoletaCliente.Moneda,
+                    Op_Gravadas: dataBoletaCliente.Op_Gravadas,
+                    Op_Inafectas: dataBoletaCliente.Op_Inafectas,
+                    Op_Exonerada: dataBoletaCliente.Op_Exonerada,
+                    Descuentos: dataBoletaCliente.Descuentos,
+                    Anticipos: dataBoletaCliente.Anticipos,
+                    Igv: dataBoletaCliente.Igv,
+                    Igv_Percent: parseFloat(dataBoletaCliente.Igv_Percent),
+                    Importe_Total: dataBoletaCliente.Importe_Total,
+                    DetalleDocumento: data_detail_xml
+                }
+
+            }
+
+        }
+
+        console.log(NC_factura_xml)
+
+        GenerarXML_NotaCredito(NC_factura_xml).then((result: any) => {
+            if (result.indicator == 1) {
+                toast.success(
+                    `${result.message}`, {
+                    duration: 2000,
+                    position: 'top-center',
+                });
+                setTimeout(functionEnviarNCredito, 2000)
+            }
+            else {
+                toast.error(
+                    `${result.message}`, {
+                    duration: 3000,
+                    position: 'top-center',
+                });
+            }
+            console.log(result)
+        })
     }
 
     async function functionEnviarNCredito() {
@@ -383,6 +444,27 @@ export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoP
                     position: 'top-center',
                 });
                 functionGenerarCorrelativo_NC(rucEmisor, Id_Tipo_Documento)
+                setTimeout(FunctionModificarEstadoDocumento, 2000)
+
+            }
+            else {
+                toast.error(
+                    `${result.message}`, {
+                    duration: 3000,
+                    position: 'top-center',
+                });
+            }
+        })
+    }
+
+    function FunctionModificarEstadoDocumento() {
+        ModificarEstadoDocumento(rucEmisor, numeroFE, 0).then((result: any) => {
+            if (result.indicator == 1) {
+                toast.success(
+                    `${result.message}`, {
+                    duration: 2000,
+                    position: 'top-center',
+                });
             }
             else {
                 toast.error(
@@ -548,11 +630,21 @@ export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoP
                                     </Typography>
                                 </td>
                                 <td className="p-2">
+                                            <div
+                                                // className='flex justify-center'
+                                                className='w-20'
+                                            >
+                                                <Chip 
+                                                color={item.Estado == '1' ? 'green' : 'red'}
+                                                 variant="outlined" value={item.Estado == '0' ? 'ANULADA' : 'ACTIVA'} className='justify-center' />
+                                            </div>
+                                        </td>
+                                <td className="p-2">
                                     <div
                                         // className='flex justify-center'
                                         className='w-20'
                                     >
-                                        <Button variant="text" className='rounded-lg' size="sm" color='teal' onClick={() => functionSeleccionarDocumento(item)}>Seleccionar</Button>
+                                        <Button variant="text" className='rounded-lg' size="sm" color='teal' disabled={item.Estado == '0' ? true : false} onClick={() => functionSeleccionarDocumento(item)}>Seleccionar</Button>
                                         {/* <Chip color="green" variant="outlined" value="ACEPTADA" className='justify-center' /> */}
                                     </div>
                                 </td>
