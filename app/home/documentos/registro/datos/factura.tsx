@@ -155,6 +155,7 @@ export default function Factura({ onSendDataFactura: onSendDataFactura }: Factur
             }}
           />
           <Input
+            className={condicionPago == 'Contado' ? 'pointer-events-none bg-gray-200' : ''}
             type='date'
             color='teal'
             crossOrigin={undefined}
@@ -165,7 +166,7 @@ export default function Factura({ onSendDataFactura: onSendDataFactura }: Factur
             onChange={(e) => {
               setfechaVencimiento(e.target.value)
             }}
-            disabled={condicionPago == "Contado" ? true : false}
+            readOnly={condicionPago == "Contado" ? true : false}
             min={fechaEmision}
           />
           <div>

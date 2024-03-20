@@ -2,13 +2,12 @@
 import React, { useRef, useState, useEffect } from 'react'
 import toast, { Toaster } from 'react-hot-toast';
 import { Button, Card, Dialog, DialogBody, DialogFooter, DialogHeader, Input, Option, Select } from '@/shared/material-tailwind-component'
-import { ObtenerEmpresaAll } from '@/services/empresa';
-
 interface Props {
     open: boolean;
     setOpen: (open: boolean) => void;
     onAgregarProducto: (producto: Producto) => void;
     dataProducto: Producto[];
+    dataEmpresa: Empresa | null;
 }
 
 interface Producto {
@@ -16,31 +15,53 @@ interface Producto {
     Bien_Servicio: string,
     Codigo_Producto: string,
     Descripcion: string,
+    Impuesto_Bolsa: string,
+    ICBPER: number,
     Cantidad: string,
     Unidad_Medida: string,
     Valor_Unitario: string,
     Importe: number,
 }
 
+interface Empresa {
+    Nro_Ruc: string;
+    Razon_Social: string;
+    Serie_F: string;
+    Serie_B: string;
+    Serie_Fn: string;
+    Serie_Bn: string;
+    Igv: number;
+    Icbper: string;
+    Logo: string;
+    Direccion: string;
+    Telefono: string;
+    Correo: string;
+    Web: string;
+    Departamento: string;
+    Provincia: string;
+    Distrito: string;
+}
+
 const AddProducto: React.FC<Props> = ({
     open,
     setOpen,
     onAgregarProducto,
-    dataProducto
+    dataProducto,
+    dataEmpresa
 }) => {
 
     const [producto, setProducto] = useState<Producto>({
         Tipo_Tributo: "IGV",
         Codigo_Producto: "",
         Descripcion: "",
-        Cantidad: "", // Number
+        Impuesto_Bolsa: "NO",
+        ICBPER: 0,
+        Cantidad: "",
         Unidad_Medida: "NIU",
         Bien_Servicio: "B",
         Valor_Unitario: "",
         Importe: 0,
     });
-
-    const [igvPercent, setigvPercent] = useState(0);
 
     const [showErrors, setShowErrors] = useState<{ [key: string]: boolean }>({
         Bien_Servicio: false,
@@ -124,19 +145,15 @@ const AddProducto: React.FC<Props> = ({
     ];
 
     const tipoTributooption = [
-        { code: 'IGV', name: 'GRAVADO' },
-        { code: 'INA', name: 'INAFECTO' },
-        { code: 'EXO', name: 'EXONERADO' },
+        { code: 'IGV', name: 'GRAVADO - (18.00%)' },
+        { code: 'INA', name: 'INAFECTO - (0%)' },
+        { code: 'EXO', name: 'EXONERADO - (0.00%)' },
     ];
 
-    useEffect(() => {
-        ObtenerEmpresaAll().then((result_1: any) => {
-            if (result_1.indicator == 1) {
-                const Igv = result_1.data[0].Igv;
-                setigvPercent(Igv);
-            }
-        })
-    }, [])
+    const listadoImpuestoBolsa = [
+        { code: 'NO', name: 'NO' },
+        { code: 'SI', name: 'SI' },
+    ];
 
     function functionCancelar() {
         setOpen(false)
@@ -148,7 +165,9 @@ const AddProducto: React.FC<Props> = ({
             Tipo_Tributo: "IGV",
             Codigo_Producto: "",
             Descripcion: "",
-            Cantidad: "", // Number
+            Impuesto_Bolsa: "NO",
+            ICBPER: 0,
+            Cantidad: "",
             Unidad_Medida: "NIU",
             Bien_Servicio: "B",
             Valor_Unitario: "",
@@ -164,6 +183,8 @@ const AddProducto: React.FC<Props> = ({
             Unidad_Medida: 'Unidad de Medida',
             Codigo_Producto: 'Código',
             Descripcion: 'Descripción',
+            Impuesto_Bolsa: 'Impuesto Bolsas Plásticas',
+            ICBPER: 'ICBPER',
             Valor_Unitario: 'Valor Unitario',
             Tipo_Tributo: 'Tipo de Tributo',
             Importe: 'Importe',
@@ -173,14 +194,17 @@ const AddProducto: React.FC<Props> = ({
 
         for (const field in validations) {
             if (producto[field as keyof Producto] == 0 || producto[field as keyof Producto] == '') {
-                toast.error(
-                    `"${validations[field as keyof Producto]}" está vacío.`, {
-                    duration: 2000,
-                    position: 'top-center',
-                    id: `"${validations[field as keyof Producto]}" está vacío.`
-                });
-                errorField = field;
-                break;
+                if ((field == 'ICBPER' && producto.Impuesto_Bolsa == 'SI') || (field != 'ICBPER')) {
+                    toast.error(
+                        `"${validations[field as keyof Producto]}" está vacío.`, {
+                        duration: 2000,
+                        position: 'top-center',
+                        id: `"${validations[field as keyof Producto]}" está vacío.`
+                    });
+                    errorField = field;
+                    break;
+                }
+
             }
         }
 
@@ -190,6 +214,8 @@ const AddProducto: React.FC<Props> = ({
             Unidad_Medida: errorField === 'Unidad_Medida',
             Codigo_Producto: errorField === 'Codigo_Producto',
             Descripcion: errorField === 'Descripcion',
+            Impuesto_Bolsa: errorField === 'Impuesto_Bolsa',
+            ICBPER: errorField === 'ICBPER',
             Valor_Unitario: errorField === 'Valor_Unitario',
             Tipo_Tributo: errorField === 'Tipo_Tributo',
             Importe: errorField === 'Importe',
@@ -198,6 +224,95 @@ const AddProducto: React.FC<Props> = ({
         setShowErrors(errors);
         if (!errorField) {
             guardar();
+        }
+    }
+
+    const handleChange = (name: string, value: any) => {
+        if (name == 'Cantidad' || name == 'Valor_Unitario') {
+            const cantidad = parseFloat(name == 'Cantidad' ? value : producto.Cantidad);
+            const valorUnitario = parseFloat(name == 'Valor_Unitario' ? value : producto.Valor_Unitario);
+            let importe = isNaN(cantidad) || isNaN(valorUnitario) ? 0 : cantidad * valorUnitario;
+            let icbper = 0;
+
+            if (producto.Tipo_Tributo === 'IGV') {
+                importe += importe * (dataEmpresa!.Igv / 100);
+            }
+            else {
+                importe = importe;
+            }
+
+            if (producto.Impuesto_Bolsa == 'SI') {
+                importe += Number(dataEmpresa!.Icbper);
+                icbper = parseFloat(dataEmpresa!.Icbper)
+            }
+
+            setProducto(prevState => ({
+                ...prevState,
+                [name]: value,
+                Importe: importe,
+                ICBPER: icbper,
+            }));
+        }
+        if (name == 'Tipo_Tributo') {
+            const cantidad = parseFloat(producto.Cantidad);
+            const valorUnitario = parseFloat(producto.Valor_Unitario);
+            let importe = isNaN(cantidad) || isNaN(valorUnitario) ? 0 : cantidad * valorUnitario;
+            let icbper = 0
+
+            if (value == 'IGV') {
+                importe += importe * (dataEmpresa!.Igv / 100);
+            }
+            else {
+                importe = importe;
+            }
+
+            if (producto.Impuesto_Bolsa == 'SI') {
+                importe += Number(dataEmpresa!.Icbper);
+                icbper = parseFloat(dataEmpresa!.Icbper)
+            }
+
+            setProducto(prevState => ({
+                ...prevState,
+                [name]: value,
+                Importe: importe,
+                ICBPER: icbper,
+            }));
+
+        }
+
+        if (name == 'Impuesto_Bolsa') {
+            const impuesto = producto.Tipo_Tributo
+            const cantidad = parseFloat(producto.Cantidad);
+            const valorUnitario = parseFloat(producto.Valor_Unitario);
+            let importe = isNaN(cantidad) || isNaN(valorUnitario) ? 0 : cantidad * valorUnitario;
+            let icbper = 0
+
+            if (impuesto == 'IGV') {
+                importe += importe * (dataEmpresa!.Igv / 100);
+            }
+            else {
+                importe = importe;
+            }
+
+            if (value == 'SI') {
+                importe += Number(dataEmpresa!.Icbper);
+                icbper = parseFloat(dataEmpresa!.Icbper)
+            }
+
+            setProducto(prevState => ({
+                ...prevState,
+                [name]: value,
+                Importe: importe,
+                ICBPER: icbper,
+            }));
+        }
+
+
+        else {
+            setProducto(prevState => ({
+                ...prevState,
+                [name]: value,
+            }));
         }
     }
 
@@ -214,61 +329,10 @@ const AddProducto: React.FC<Props> = ({
         }
     }
 
-    const handleChange = (name: string, value: any) => {
-        if (name == 'Cantidad' || name == 'Valor_Unitario') {
-            const cantidad = parseFloat(name == 'Cantidad' ? value : producto.Cantidad);
-            const valorUnitario = parseFloat(name == 'Valor_Unitario' ? value : producto.Valor_Unitario);
-            let importe = isNaN(cantidad) || isNaN(valorUnitario) ? 0 : cantidad * valorUnitario;
-            if (producto.Tipo_Tributo === 'IGV') {
-                importe += importe * (igvPercent / 100);
-            }
-            else {
-                importe = importe;
-            }
-            setProducto(prevState => ({
-                ...prevState,
-                [name]: value,
-                Importe: Number(importe.toFixed(2)),
-            }));
-        }
-        if (name == 'Tipo_Tributo') {
-            const cantidad = parseFloat(producto.Cantidad);
-            const valorUnitario = parseFloat(producto.Valor_Unitario);
-            let importe = isNaN(cantidad) || isNaN(valorUnitario) ? 0 : cantidad * valorUnitario;
-
-            if (value == 'IGV') {
-                importe += importe * (igvPercent / 100);
-            }
-            else {
-                importe = importe;
-            }
-
-            setProducto(prevState => ({
-                ...prevState,
-                [name]: value,
-                Importe: Number(importe.toFixed(2)),
-            }));
-
-        } else {
-            setProducto(prevState => ({
-                ...prevState,
-                [name]: value,
-            }));
-        }
-    }
-
-    function functionComasMiles(number: string) {
-        // Convertir el número a string y separar la parte entera de la decimal
-        let parts = number.toString().split(".");
-        let integerPart = parts[0];
-        let decimalPart = parts.length > 1 ? parts[1] : "00";
-
-        // Agregar comas para separar los miles
-        integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-
-        // Combinar la parte entera con la parte decimal
-        return `${integerPart}.${decimalPart.slice(0, 2)}`;
-    }
+    const formatNumber = (value: any) => {
+        const formattedNumber = value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return formattedNumber;
+    };
 
     return (
         <>
@@ -279,7 +343,7 @@ const AddProducto: React.FC<Props> = ({
                 }}
             >
                 <Toaster />
-                <DialogHeader>Agregar Producto</DialogHeader>
+                <DialogHeader className='color-text'>Agregar Producto</DialogHeader>
                 <DialogBody divider>
                     <Card color="transparent" shadow={false}>
                         <form>
@@ -371,6 +435,36 @@ const AddProducto: React.FC<Props> = ({
                                             maxLength={200}
                                         />
                                     </div>
+                                    <Select
+                                        color='teal'
+                                        error={showErrors.Impuesto_Bolsa && (producto.Impuesto_Bolsa == '')}
+                                        label="Impuesto Bolsa Plásticas"
+                                        name="Impuesto_Bolsa"
+                                        size="md"
+                                        value={producto.Impuesto_Bolsa}
+                                        key={producto.Impuesto_Bolsa}
+                                        onChange={(e) => {
+                                            handleChange('Impuesto_Bolsa', e)
+                                        }}
+                                    >
+                                        {listadoImpuestoBolsa.map((tipo) => (
+                                            <Option key={tipo.code} value={tipo.code}>
+                                                {tipo.name}
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                    <div>
+                                        <Input
+                                            color='teal'
+                                            crossOrigin={undefined}
+                                            value={formatNumber(producto.ICBPER)}
+                                            name="ICBPER"
+                                            size="md"
+                                            label="ICBPER"
+                                            className='pointer-events-none bg-gray-200'
+                                            readOnly
+                                        />
+                                    </div>
                                     <div>
                                         <Input
                                             color='teal'
@@ -392,7 +486,7 @@ const AddProducto: React.FC<Props> = ({
                                     <Select
                                         color='teal'
                                         error={showErrors.Tipo_Tributo && (producto.Tipo_Tributo == '')}
-                                        label="Tipo de Tributo"
+                                        label="Impuesto"
                                         name="Tipo_Tributo"
                                         size="md"
                                         value={producto.Tipo_Tributo}
@@ -409,16 +503,16 @@ const AddProducto: React.FC<Props> = ({
                                     </Select>
                                     <div>
                                         <Input
-                                            className='cursor-not-allowed'
+                                            className='pointer-events-none bg-gray-200'
+                                            readOnly
                                             color='teal'
                                             error={showErrors.Importe && (producto.Importe == 0)}
                                             crossOrigin={undefined}
                                             name="Importe"
-                                            value={functionComasMiles(producto.Importe.toString())}
+                                            value={formatNumber(producto.Importe)}
                                             size="md"
                                             label="Importe"
                                             maxLength={10}
-                                            readOnly
                                         />
                                     </div>
                                 </div>

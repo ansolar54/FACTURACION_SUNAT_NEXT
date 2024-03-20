@@ -19,10 +19,10 @@ import { ObtenerFacturaCliente } from '@/services/factura';
 import { EnviarNCredito, GenerarSerieCorrelativo_NotaCredito, GenerarXML_NotaCredito, ObtenerRutaNCredito, RegistrarNCredito } from '@/services/nota_credito';
 
 import toast, { Toaster } from 'react-hot-toast';
-import { ObtenerEmpresaAll } from '@/services/empresa';
-import Swal from 'sweetalert2';
+import {
+    DocumentArrowUpIcon
+} from "@/shared/heroicons";
 import { useRouter } from 'next/navigation';
-import Registro from '../page';
 import { ObtenerBoletaCliente } from '@/services/boleta';
 
 type Body = {
@@ -61,7 +61,7 @@ export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoP
     //ROUTER
     const router = useRouter()
 
-    const TABLE_HEAD = ["N° Documento", "Cliente", "Fecha Emisión", "Importe Total", "Estado","Acción"];
+    const TABLE_HEAD = ["N° Documento", "Cliente", "Fecha Emisión", "Importe Total", "Estado", "Acción"];
 
     // TABLE - LISTADO DOCUMENTO
     const [ListadoDocumento, setListadoDocumento] = useState<Documento[]>([]);
@@ -551,12 +551,14 @@ export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoP
             </div>
             <div className="justify-center flex gap-4">
                 <Button
+                    className="flex items-center gap-3 color-button"
                     size="md"
-                    color={numeroFE && tipoSeleccionado.Id && fechaEmision && motivo ? "teal" : "blue-gray"}
+                    // color={numeroFE && tipoSeleccionado.Id && fechaEmision && motivo}
                     disabled={!numeroFE || !tipoSeleccionado.Id || !fechaEmision || !motivo}
-                    // className="!absolute right-1 top-1 rounded"
                     onClick={() => functionArmarXML(numeroFE, Id_Cliente)}
                 >
+                    <DocumentArrowUpIcon strokeWidth={2} className='h-5 w-5'
+                    />
                     ENVIAR NOTA CRÉDITO
                 </Button>
             </div>
@@ -630,15 +632,15 @@ export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoP
                                     </Typography>
                                 </td>
                                 <td className="p-2">
-                                            <div
-                                                // className='flex justify-center'
-                                                className='w-20'
-                                            >
-                                                <Chip 
-                                                color={item.Estado == '1' ? 'green' : 'red'}
-                                                 variant="outlined" value={item.Estado == '0' ? 'ANULADA' : 'ACTIVA'} className='justify-center' />
-                                            </div>
-                                        </td>
+                                    <div
+                                        // className='flex justify-center'
+                                        className='w-20'
+                                    >
+                                        <Chip
+                                            color={item.Estado == '1' ? 'green' : 'red'}
+                                            variant="outlined" value={item.Estado == '0' ? 'ANULADA' : 'ACTIVA'} className='justify-center' />
+                                    </div>
+                                </td>
                                 <td className="p-2">
                                     <div
                                         // className='flex justify-center'

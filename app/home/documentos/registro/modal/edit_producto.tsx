@@ -2,24 +2,43 @@
 import React, { useRef, useState, useEffect } from 'react'
 import { Button, Card, Dialog, DialogBody, DialogFooter, DialogHeader, Input, Option, Select } from '@/shared/material-tailwind-component'
 import toast, { Toaster } from 'react-hot-toast';
-import { ObtenerEmpresaAll } from '@/services/empresa';
-
 interface Props {
     open: boolean;
     setOpen: (open: boolean) => void;
     seleccionado?: Producto;
     onEditarProducto: (producto: Producto) => void;
+    dataEmpresa: Empresa | null;
 }
-
 interface Producto {
     Tipo_Tributo: string,
     Bien_Servicio: string,
     Codigo_Producto: string,
     Descripcion: string,
+    Impuesto_Bolsa: string,
+    ICBPER: number,
     Cantidad: string,
     Unidad_Medida: string,
     Valor_Unitario: string,
     Importe: number,
+}
+
+interface Empresa {
+    Nro_Ruc: string;
+    Razon_Social: string;
+    Serie_F: string;
+    Serie_B: string;
+    Serie_Fn: string;
+    Serie_Bn: string;
+    Igv: number;
+    Icbper: string;
+    Logo: string;
+    Direccion: string;
+    Telefono: string;
+    Correo: string;
+    Web: string;
+    Departamento: string;
+    Provincia: string;
+    Distrito: string;
 }
 
 const EditProducto: React.FC<Props> = ({
@@ -27,23 +46,23 @@ const EditProducto: React.FC<Props> = ({
     setOpen,
     seleccionado,
     onEditarProducto,
+    dataEmpresa
 }) => {
 
     const initialClienteRef = useRef<Producto | null>(null);
-
-    const [igvPercent, setigvPercent] = useState(0);
 
     const [producto, setProducto] = useState<Producto>({
         Tipo_Tributo: "",
         Codigo_Producto: "",
         Descripcion: "",
-        Cantidad: "", // Number
+        Impuesto_Bolsa: "",
+        ICBPER: 0,
+        Cantidad: "",
         Unidad_Medida: "",
         Bien_Servicio: "",
         Valor_Unitario: "",
         Importe: 0,
     });
-    // console.log(seleccionado)
 
     const [showErrors, setShowErrors] = useState<{ [key: string]: boolean }>({
         Bien_Servicio: false,
@@ -55,154 +74,6 @@ const EditProducto: React.FC<Props> = ({
         Tipo_Tributo: false,
         Importe: false,
     });
-
-    useEffect(() => {
-        if (seleccionado) {
-            setProducto({
-                Tipo_Tributo: seleccionado.Tipo_Tributo,
-                Codigo_Producto: seleccionado.Codigo_Producto,
-                Descripcion: seleccionado.Descripcion,
-                Cantidad: seleccionado.Cantidad,
-                Unidad_Medida: seleccionado.Unidad_Medida,
-                Bien_Servicio: seleccionado.Bien_Servicio,
-                Valor_Unitario: seleccionado.Valor_Unitario,
-                Importe: seleccionado.Importe,
-            });
-            initialClienteRef.current = { ...seleccionado };
-        }
-    }, [seleccionado])
-
-    useEffect(() => {
-        ObtenerEmpresaAll().then((result_1: any) => {
-            if (result_1.indicator == 1) {
-                const Igv = result_1.data[0].Igv;
-                setigvPercent(Igv);
-            }
-        })
-    }, [])
-
-    const camposModificados = () => {
-        return Object.keys(producto).some(key => producto[key as keyof Producto] !== initialClienteRef.current?.[key as keyof Producto]);
-    };
-
-    const handleChange = (name: string, value: any) => {
-        if (name == 'Cantidad' || name == 'Valor_Unitario') {
-            const cantidad = parseFloat(name == 'Cantidad' ? value : producto.Cantidad);
-            const valorUnitario = parseFloat(name == 'Valor_Unitario' ? value : producto.Valor_Unitario);
-            let importe = isNaN(cantidad) || isNaN(valorUnitario) ? 0 : cantidad * valorUnitario;
-            if (producto.Tipo_Tributo === 'IGV') {
-                importe += importe * (igvPercent / 100);
-            }
-            else {
-                importe = importe;
-            }
-            setProducto(prevState => ({
-                ...prevState,
-                [name]: value,
-                Importe: Number(importe.toFixed(2)),
-            }));
-        }
-        if (name == 'Tipo_Tributo') {
-            const cantidad = parseFloat(producto.Cantidad);
-            const valorUnitario = parseFloat(producto.Valor_Unitario);
-            let importe = isNaN(cantidad) || isNaN(valorUnitario) ? 0 : cantidad * valorUnitario;
-
-            if (value == 'IGV') {
-                importe += importe * (igvPercent / 100);
-            }
-            else {
-                importe = importe;
-            }
-
-            setProducto(prevState => ({
-                ...prevState,
-                [name]: value,
-                Importe: Number(importe.toFixed(2)),
-            }));
-
-        } else {
-            setProducto(prevState => ({
-                ...prevState,
-                [name]: value,
-            }));
-        }
-    }
-
-    function functionCancelar() {
-        setOpen(false)
-        functionLimpiarCampos();
-    }
-
-    const functionLimpiarCampos = () => {
-        setProducto({
-            Tipo_Tributo: seleccionado!.Tipo_Tributo,
-            Codigo_Producto: seleccionado!.Codigo_Producto,
-            Descripcion: seleccionado!.Descripcion,
-            Cantidad: seleccionado!.Cantidad,
-            Unidad_Medida: seleccionado!.Unidad_Medida,
-            Bien_Servicio: seleccionado!.Bien_Servicio,
-            Valor_Unitario: seleccionado!.Valor_Unitario,
-            Importe: seleccionado!.Importe,
-        });
-        setShowErrors({});
-    };
-
-    function functionValidarProducto() {
-        const validations = {
-            Bien_Servicio: 'Bien / Servicio',
-            Cantidad: 'Cantidad',
-            Unidad_Medida: 'Unidad de Medida',
-            Codigo_Producto: 'Código',
-            Descripcion: 'Descripción',
-            Valor_Unitario: 'Valor Unitario',
-            Tipo_Tributo: 'Tipo de Tributo',
-            Importe: 'Importe',
-        };
-
-        let errorField = '';
-
-        for (const field in validations) {
-            if (producto[field as keyof Producto] == 0 || producto[field as keyof Producto] == '') {
-                toast.error(
-                    `"${validations[field as keyof Producto]}" está vacío.`, {
-                    duration: 2000,
-                    position: 'top-center',
-                    id: `"${validations[field as keyof Producto]}" está vacío.`
-                });
-                errorField = field;
-                break;
-            }
-        }
-
-        const errors = {
-            Bien_Servicio: errorField === 'Bien_Servicio',
-            Cantidad: errorField === 'Cantidad',
-            Unidad_Medida: errorField === 'Unidad_Medida',
-            Codigo_Producto: errorField === 'Codigo_Producto',
-            Descripcion: errorField === 'Descripcion',
-            Valor_Unitario: errorField === 'Valor_Unitario',
-            Tipo_Tributo: errorField === 'Tipo_Tributo',
-            Importe: errorField === 'Importe',
-        };
-
-        setShowErrors(errors);
-        if (!errorField) {
-            if (camposModificados()) {
-                guardar();
-            } else {
-                toast('Los campos no han sido modificados.', {
-                    duration: 2000,
-                    position: 'top-center',
-                    icon: '⚠️',
-                    id: 'Los campos no han sido modificados.'
-                });
-            }
-        }
-    }
-    function guardar() {
-        onEditarProducto(producto);
-        functionCancelar();
-    }
 
     const tipoProductooption = [
         { code: 'B', name: 'BIEN' },
@@ -275,10 +146,208 @@ const EditProducto: React.FC<Props> = ({
     ];
 
     const tipoTributooption = [
-        { code: 'IGV', name: 'GRAVADO' },
-        { code: 'INA', name: 'INAFECTO' },
-        { code: 'EXO', name: 'EXONERADO' },
+        { code: 'IGV', name: 'GRAVADO - (18.00%)' },
+        { code: 'INA', name: 'INAFECTO - (0%)' },
+        { code: 'EXO', name: 'EXONERADO - (0.00%)' },
     ];
+
+    const listadoImpuestoBolsa = [
+        { code: 'NO', name: 'NO' },
+        { code: 'SI', name: 'SI' },
+    ];
+
+    const camposModificados = () => {
+        return Object.keys(producto).some(key => producto[key as keyof Producto] !== initialClienteRef.current?.[key as keyof Producto]);
+    };
+
+    useEffect(() => {
+        if (seleccionado) {
+            setProducto({
+                Tipo_Tributo: seleccionado.Tipo_Tributo,
+                Codigo_Producto: seleccionado.Codigo_Producto,
+                Descripcion: seleccionado.Descripcion,
+                Impuesto_Bolsa: seleccionado.Impuesto_Bolsa,
+                ICBPER: seleccionado.ICBPER,
+                Cantidad: seleccionado.Cantidad,
+                Unidad_Medida: seleccionado.Unidad_Medida,
+                Bien_Servicio: seleccionado.Bien_Servicio,
+                Valor_Unitario: seleccionado.Valor_Unitario,
+                Importe: seleccionado.Importe,
+            });
+            initialClienteRef.current = { ...seleccionado };
+        }
+    }, [seleccionado])
+
+    function functionCancelar() {
+        setOpen(false)
+        functionLimpiarCampos();
+    }
+
+    const functionLimpiarCampos = () => {
+        setProducto({
+            Tipo_Tributo: seleccionado!.Tipo_Tributo,
+            Codigo_Producto: seleccionado!.Codigo_Producto,
+            Descripcion: seleccionado!.Descripcion,
+            Impuesto_Bolsa: seleccionado!.Impuesto_Bolsa,
+            ICBPER: seleccionado!.ICBPER,
+            Cantidad: seleccionado!.Cantidad,
+            Unidad_Medida: seleccionado!.Unidad_Medida,
+            Bien_Servicio: seleccionado!.Bien_Servicio,
+            Valor_Unitario: seleccionado!.Valor_Unitario,
+            Importe: seleccionado!.Importe,
+        });
+        setShowErrors({});
+    };
+
+    function functionValidarProducto() {
+        const validations = {
+            Bien_Servicio: 'Bien / Servicio',
+            Cantidad: 'Cantidad',
+            Unidad_Medida: 'Unidad de Medida',
+            Codigo_Producto: 'Código',
+            Descripcion: 'Descripción',
+            Impuesto_Bolsa: 'Impuesto de Bolsas Plásticas',
+            ICBPER: 'ICBPER',
+            Valor_Unitario: 'Valor Unitario',
+            Tipo_Tributo: 'Tipo de Tributo',
+            Importe: 'Importe',
+        };
+
+        let errorField = '';
+
+        for (const field in validations) {
+            if (producto[field as keyof Producto] == 0 || producto[field as keyof Producto] == '') {
+                if ((field == 'ICBPER' && producto.Impuesto_Bolsa == 'SI') || (field != 'ICBPER')) {
+                    toast.error(
+                        `"${validations[field as keyof Producto]}" está vacío.`, {
+                        duration: 2000,
+                        position: 'top-center',
+                        id: `"${validations[field as keyof Producto]}" está vacío.`
+                    });
+                    errorField = field;
+                    break;
+                }
+            }
+        }
+
+        const errors = {
+            Bien_Servicio: errorField === 'Bien_Servicio',
+            Cantidad: errorField === 'Cantidad',
+            Unidad_Medida: errorField === 'Unidad_Medida',
+            Codigo_Producto: errorField === 'Codigo_Producto',
+            Descripcion: errorField === 'Descripcion',
+            Impuesto_Bolsa: errorField === 'Impuesto_Bolsa',
+            ICBPER: errorField === 'ICBPER',
+            Valor_Unitario: errorField === 'Valor_Unitario',
+            Tipo_Tributo: errorField === 'Tipo_Tributo',
+            Importe: errorField === 'Importe',
+        };
+
+        setShowErrors(errors);
+        if (!errorField) {
+            if (camposModificados()) {
+                guardar();
+            } else {
+                toast('Los campos no han sido modificados.', {
+                    duration: 2000,
+                    position: 'top-center',
+                    icon: '⚠️',
+                    id: 'Los campos no han sido modificados.'
+                });
+            }
+        }
+    }
+
+    const handleChange = (name: string, value: any) => {
+        if (name == 'Cantidad' || name == 'Valor_Unitario') {
+            const cantidad = parseFloat(name == 'Cantidad' ? value : producto.Cantidad);
+            const valorUnitario = parseFloat(name == 'Valor_Unitario' ? value : producto.Valor_Unitario);
+            let importe = isNaN(cantidad) || isNaN(valorUnitario) ? 0 : cantidad * valorUnitario;
+            let icbper = 0;
+
+            if (producto.Tipo_Tributo === 'IGV') {
+                importe += importe * (dataEmpresa!.Igv / 100);
+            }
+            else {
+                importe = importe;
+            }
+
+            if (producto.Impuesto_Bolsa == 'SI') {
+                importe += Number(dataEmpresa!.Icbper);
+                icbper = parseFloat(dataEmpresa!.Icbper)
+            }
+
+            setProducto(prevState => ({
+                ...prevState,
+                [name]: value,
+                Importe: importe,
+                ICBPER: icbper,
+            }));
+        }
+        if (name == 'Tipo_Tributo') {
+            const cantidad = parseFloat(producto.Cantidad);
+            const valorUnitario = parseFloat(producto.Valor_Unitario);
+            let importe = isNaN(cantidad) || isNaN(valorUnitario) ? 0 : cantidad * valorUnitario;
+            let icbper = 0
+
+            if (value == 'IGV') {
+                importe += importe * (dataEmpresa!.Igv / 100);
+            }
+            else {
+                importe = importe;
+            }
+
+            if (producto.Impuesto_Bolsa == 'SI') {
+                importe += Number(dataEmpresa!.Icbper);
+                icbper = parseFloat(dataEmpresa!.Icbper)
+            }
+
+            setProducto(prevState => ({
+                ...prevState,
+                [name]: value,
+                Importe: Number(importe.toFixed(2)),
+            }));
+
+        }
+        if (name == 'Impuesto_Bolsa') {
+            const impuesto = producto.Tipo_Tributo
+            const cantidad = parseFloat(producto.Cantidad);
+            const valorUnitario = parseFloat(producto.Valor_Unitario);
+            let importe = isNaN(cantidad) || isNaN(valorUnitario) ? 0 : cantidad * valorUnitario;
+            let icbper = 0
+
+            if (impuesto == 'IGV') {
+                importe += importe * (dataEmpresa!.Igv / 100);
+            }
+            else {
+                importe = importe;
+            }
+
+            if (value == 'SI') {
+                importe += Number(dataEmpresa!.Icbper);
+                icbper = parseFloat(dataEmpresa!.Icbper)
+            }
+
+            setProducto(prevState => ({
+                ...prevState,
+                [name]: value,
+                Importe: importe,
+                ICBPER: icbper,
+            }));
+        }
+
+        else {
+            setProducto(prevState => ({
+                ...prevState,
+                [name]: value,
+            }));
+        }
+    }
+
+    function guardar() {
+        onEditarProducto(producto);
+        functionCancelar();
+    }
 
     function functionComasMiles(number: string) {
         // Convertir el número a string y separar la parte entera de la decimal
@@ -293,6 +362,11 @@ const EditProducto: React.FC<Props> = ({
         return `${integerPart}.${decimalPart.slice(0, 2)}`;
     }
 
+    const formatNumber = (value: any) => {
+        const formattedNumber = value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return formattedNumber;
+    };
+
     return (
         <>
             <Dialog open={open} handler={() => setOpen(!open)} size='md'
@@ -301,7 +375,7 @@ const EditProducto: React.FC<Props> = ({
                     unmount: { scale: 0.9, y: -100 },
                 }}>
                 <Toaster />
-                <DialogHeader>Editar Producto</DialogHeader>
+                <DialogHeader className='color-text'>Editar Producto</DialogHeader>
                 <DialogBody divider>
                     <Card color="transparent" shadow={false}>
                         <form>
@@ -361,8 +435,8 @@ const EditProducto: React.FC<Props> = ({
                                     </Select>
                                     <div>
                                         <Input
-                                            className='cursor-not-allowed'
-                                            disabled
+                                            className='pointer-events-none bg-gray-200'
+                                            readOnly
                                             color='teal'
                                             error={showErrors.Codigo_Producto && (producto.Codigo_Producto == '')}
                                             crossOrigin={undefined}
@@ -393,6 +467,35 @@ const EditProducto: React.FC<Props> = ({
                                             maxLength={200}
                                         />
                                     </div>
+                                    <Select
+                                        color='teal'
+                                        error={showErrors.Impuesto_Bolsa && (producto.Impuesto_Bolsa == '')}
+                                        label="Impuesto Bolsa Plásticas"
+                                        name="Impuesto_Bolsa"
+                                        size="md"
+                                        value={producto.Impuesto_Bolsa}
+                                        onChange={(e) => {
+                                            handleChange('Impuesto_Bolsa', e)
+                                        }}
+                                    >
+                                        {listadoImpuestoBolsa.map((tipo) => (
+                                            <Option key={tipo.code} value={tipo.code}>
+                                                {tipo.name}
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                    <div>
+                                        <Input
+                                            color='teal'
+                                            crossOrigin={undefined}
+                                            value={formatNumber(producto.ICBPER)}
+                                            name="ICBPER"
+                                            size="md"
+                                            label="ICBPER"
+                                            className='pointer-events-none bg-gray-200'
+                                            readOnly
+                                        />
+                                    </div>
                                     <div>
                                         <Input
                                             color='teal'
@@ -414,7 +517,7 @@ const EditProducto: React.FC<Props> = ({
                                     <Select
                                         color='teal'
                                         error={showErrors.Tipo_Tributo && (producto.Tipo_Tributo == '')}
-                                        label="Tipo de Tributo"
+                                        label="Impuesto"
                                         name="Tipo_Tributo"
                                         size="md"
                                         value={producto.Tipo_Tributo}
@@ -431,13 +534,13 @@ const EditProducto: React.FC<Props> = ({
                                     </Select>
                                     <div>
                                         <Input
-                                            className='cursor-not-allowed'
+                                            className='pointer-events-none bg-gray-200'
                                             readOnly
                                             color='teal'
                                             error={showErrors.Importe && (producto.Importe == 0)}
                                             crossOrigin={undefined}
                                             name="Importe"
-                                            value={functionComasMiles(producto.Importe.toString())}
+                                            value={formatNumber(producto.Importe)}
                                             size="md"
                                             label="Importe"
                                             maxLength={10}
