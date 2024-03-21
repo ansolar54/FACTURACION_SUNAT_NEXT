@@ -286,7 +286,7 @@ const EditEmpresa: React.FC<EditClienteProps> = ({
                 }}
             >
                 <Toaster />
-                <DialogHeader>Editar Empresa</DialogHeader>
+                <DialogHeader className='color-text'>Editar Empresa</DialogHeader>
                 <DialogBody divider>
                     <Card color="transparent" shadow={false}>
                         <form>

@@ -240,7 +240,7 @@ const AddEmpresa: React.FC<AddEmpresaProps> = ({
                 }}
             >
                 <Toaster />
-                <DialogHeader>Agregar Empresa</DialogHeader>
+                <DialogHeader className='color-text'>Agregar Empresa</DialogHeader>
                 <DialogBody divider>
                     <Card color="transparent" shadow={false}>
                         <form>

@@ -38,62 +38,6 @@ import EditProducto from './modal/edit_producto';
 import AddCliente, { Cliente_Add } from '../../administracion/cliente/modal/add_cliente';
 import { EnviarCorreo } from '@/services/correo';
 import NotaCredito from './datos/nota_credito';
-import { GenerarSerieCorrelativo_NotaCredito } from '@/services/nota_credito';
-
-interface Cliente {
-    Id: number,
-    Nombre: string,
-    Direccion: string,
-    Correo: string,
-}
-interface DatosBoleta {
-    fechaEmision: string;
-    moneda: string;
-}
-interface DatosFactura {
-    condicionPago: string;
-    moneda: string;
-    fechaEmision: string;
-    fechaVencimiento: string;
-    vendedor: string;
-    guiaRemision: string;
-    nroPedido: string;
-    ordenCompra: string;
-    observacion: string;
-}
-interface DatosNCredito {
-    nroNotaCredito: string
-}
-interface Producto {
-    Tipo_Tributo: string,
-    Bien_Servicio: string,
-    Codigo_Producto: string,
-    Descripcion: string,
-    Impuesto_Bolsa: string,
-    ICBPER: number,
-    Cantidad: string,
-    Unidad_Medida: string,
-    Valor_Unitario: string,
-    Importe: number,
-}
-interface Empresa {
-    Nro_Ruc: string;
-    Razon_Social: string;
-    Serie_F: string;
-    Serie_B: string;
-    Serie_Fn: string;
-    Serie_Bn: string;
-    Igv: number;
-    Icbper: string;
-    Logo: string;
-    Direccion: string;
-    Telefono: string;
-    Correo: string;
-    Web: string;
-    Departamento: string;
-    Provincia: string;
-    Distrito: string;
-}
 
 const Registro = () => {
     //ROUTER
@@ -252,9 +196,9 @@ const Registro = () => {
                 opGravadas += parseFloat(element.Valor_Unitario) * parseFloat(element.Cantidad);
                 igv += (parseFloat(element.Valor_Unitario) * parseFloat(element.Cantidad)) * (igvPercent / 100);
             } else if (element.Tipo_Tributo == 'INA') {
-                opInafectas += element.Importe;
+                opInafectas += parseFloat(element.Valor_Unitario) * parseFloat(element.Cantidad);
             } else if (element.Tipo_Tributo == 'EXO') {
-                opExonerada += element.Importe;
+                opExonerada += parseFloat(element.Valor_Unitario) * parseFloat(element.Cantidad);
             }
 
             valorVentaTotal += parseFloat(element.Valor_Unitario) * parseFloat(element.Cantidad);
@@ -426,6 +370,11 @@ const Registro = () => {
             data_detail_xml.push(model_detail_xml);
         }
 
+        let Op_Inafectas = opInafectas ? opInafectas : icbper;
+        if (opInafectas && icbper) {
+            Op_Inafectas = opInafectas + icbper;
+        }
+
         let model_boleta_xml = {
             Ruc_Emisor: rucEmisor,
             Nro_Documento: nroBoleta,
@@ -434,7 +383,7 @@ const Registro = () => {
             Fecha_Emision: dataBoleta.fechaEmision,
             Moneda: dataBoleta.moneda,
             Op_Gravadas: opGravadas,
-            Op_Inafectas: opInafectas,
+            Op_Inafectas: Op_Inafectas,
             Op_Exonerada: opExonerada,
             Descuentos: descuentos,
             Anticipos: anticipos,
@@ -508,7 +457,7 @@ const Registro = () => {
                 Descripcion: element.Descripcion,
                 Cantidad: parseFloat(element.Cantidad),
                 Unidad_Medida: element.Unidad_Medida,
-                Precio_Unitario: element.Tipo_Tributo == 'IGV' ? parseFloat(element.Valor_Unitario) + (parseFloat(element.Valor_Unitario) * (igvPercent / 100)) : parseFloat(element.Valor_Unitario),
+                Precio_Unitario: element.Tipo_Tributo == 'IGV' ? parseFloat(element.Valor_Unitario) + (parseFloat(element.Valor_Unitario) * (igvPercent / 100)) + element.ICBPER : parseFloat(element.Valor_Unitario),
                 Importe: element.Importe,
                 Bien_Servicio: element.Bien_Servicio,
                 Tipo_Tributo: element.Tipo_Tributo,
@@ -520,6 +469,11 @@ const Registro = () => {
             data_detail.push(model_detail);
         }
 
+        let Op_Inafectas = opInafectas ? opInafectas : icbper;
+        if (opInafectas && icbper) {
+            Op_Inafectas = opInafectas + icbper;
+        }
+
         let modal_boleta = {
             Id_Emisor: idEmisor,
             Id_Cliente: cliente.Id,
@@ -527,7 +481,7 @@ const Registro = () => {
             Fecha_Emision: dataBoleta.fechaEmision,
             Moneda: dataBoleta.moneda,
             Op_Gravadas: opGravadas,
-            Op_Inafectas: opInafectas,
+            Op_Inafectas: Op_Inafectas,
             Op_Exonerada: opExonerada,
             Descuentos: descuentos,
             Anticipos: anticipos,
@@ -579,6 +533,11 @@ const Registro = () => {
             data_detail_xml.push(model_detail_xml);
         }
 
+        let Op_Inafectas = opInafectas ? opInafectas : icbper;
+        if (opInafectas && icbper) {
+            Op_Inafectas = opInafectas + icbper;
+        }
+
         let model_factura_xml = {
             ruc_Emisor: rucEmisor,
             nro_Documento: nroFactura,
@@ -590,7 +549,7 @@ const Registro = () => {
             condicion_Pago: dataFactura.condicionPago,
             moneda: dataFactura.moneda,
             Op_Gravadas: opGravadas,
-            Op_Inafectas: opInafectas,
+            Op_Inafectas: Op_Inafectas,
             Op_Exonerada: opExonerada,
             Descuentos: descuentos,
             Anticipos: anticipos,
@@ -600,6 +559,7 @@ const Registro = () => {
             detalleDocumento: data_detail_xml
         }
 
+        console.log(model_factura_xml)
         GenerarXMLFactura(model_factura_xml).then((result: any) => {
             if (result.indicator == 1) {
                 toast.success(
@@ -667,7 +627,7 @@ const Registro = () => {
                 Descripcion: element.Descripcion,
                 Cantidad: Number(element.Cantidad),
                 Unidad_Medida: element.Unidad_Medida,
-                Precio_Unitario: element.Tipo_Tributo == 'IGV' ? parseFloat(element.Valor_Unitario) + (parseFloat(element.Valor_Unitario) * (igvPercent / 100)) : parseFloat(element.Valor_Unitario),
+                Precio_Unitario: element.Tipo_Tributo == 'IGV' ? parseFloat(element.Valor_Unitario) + (parseFloat(element.Valor_Unitario) * (igvPercent / 100)) + element.ICBPER : parseFloat(element.Valor_Unitario),
                 Importe: element.Importe,
                 Bien_Servicio: element.Bien_Servicio,
                 Tipo_Tributo: element.Tipo_Tributo,
@@ -677,6 +637,11 @@ const Registro = () => {
                 Icbper: 0,
             }
             data_detail.push(model_detail);
+        }
+
+        let Op_Inafectas = opInafectas ? opInafectas : icbper;
+        if (opInafectas && icbper) {
+            Op_Inafectas = opInafectas + icbper;
         }
 
         let model_factura = {
@@ -692,7 +657,7 @@ const Registro = () => {
             Vendedor: dataFactura.vendedor,
             Guia_Remision: dataFactura.guiaRemision,
             Op_Gravadas: opGravadas,
-            Op_Inafectas: opInafectas,
+            Op_Inafectas: Op_Inafectas,
             Op_Exonerada: opExonerada,
             Descuentos: descuentos,
             Anticipos: anticipos,
@@ -705,6 +670,8 @@ const Registro = () => {
             Correlativo: correlativo,
             DetalleDocumento: data_detail
         }
+
+        console.log(model_factura)
 
         GuardarFactura(model_factura).then((result: any) => {
             if (result.indicator == 1) {
@@ -1050,7 +1017,6 @@ const Registro = () => {
             <Toaster />
             <Card className='w-full rounded-none' color="white" shadow={true}>
                 <CardBody className="rounded-md pt-2 px-4">
-
                     {/* DATOS DEL DOCUMENTO */}
                     <div className="justify-between flex gap-4">
                         <div className='flex gap-4'>
@@ -1128,8 +1094,8 @@ const Registro = () => {
 
                     {/* CAMPOS DATOS DEL CLIENTE */}
                     {IdTipoDocumento != '3' && (
-                        <div className="my-4 flex flex-col gap-6">
-                            <div className="grid grid-cols-5 gap-4">
+                        <div className="my-4 flex flex-col">
+                            <div className="grid grid-cols-5 gap-2">
                                 <div className='flex gap-2 items-center'>
                                     <Input
                                         color='teal'
@@ -1144,6 +1110,7 @@ const Registro = () => {
                                         }}
                                         maxLength={20}
                                         error={IdTipoDocumento == '1' ? NroDocumento_Cliente.length < 11 : IdTipoDocumento == '2' ? NroDocumento_Cliente.length < 8 : true}
+                                        icon={<i className="fas fa-heart" />}
                                     />
                                     {((IdTipoDocumento == '1' && NroDocumento_Cliente.length < 11) || ((IdTipoDocumento == '2' && NroDocumento_Cliente.length < 8))) && (
                                         <Tooltip
@@ -1373,235 +1340,124 @@ const Registro = () => {
                     {/* CAMPOS DE OPERACIONES PRODUCTO */}
                     {IdTipoDocumento != '3' && (
                         <>
-                            {opGravadas != 0 && (
-                                <div className="flex flex-col-reverse md:flex-row justify-end gap-4">
-                                    <div className="flex items-center">
-                                        <Typography variant="small" color="blue-gray" className="font-normal">Op. Gravadas :</Typography>
-                                    </div>
-                                    <div>
-                                        <Input
-                                            className="pointer-events-none border-0 bg-gray-200 rounded !border-t-blue-gray-200 focus:!border-t-gray-900"
-                                            readOnly
-                                            color='teal'
-                                            crossOrigin={undefined}
-                                            value={(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(opGravadas)}
-                                            size="md"
-                                            placeholder="Op. Gravadas"
-                                            labelProps={{
-                                                className: "before:content-none after:content-none",
-                                            }}
-                                            containerProps={{
-                                                className: "min-w-0",
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                            {opInafectas != 0 && (
-                                <div className="mt-4 flex flex-col-reverse md:flex-row justify-end gap-4">
-                                    <div className="flex items-center">
-                                        <Typography variant="small" color="blue-gray" className="font-normal">Op. Inafectas :</Typography>
-                                    </div>
-                                    <div>
-                                        <Input
-                                            className="pointer-events-none border-0 bg-gray-200 rounded !border-t-blue-gray-200 focus:!border-t-gray-900"
-                                            readOnly
-                                            color='teal'
-                                            crossOrigin={undefined}
-                                            value={(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(opInafectas)}
-                                            size="md"
-                                            labelProps={{
-                                                className: "before:content-none after:content-none",
-                                            }}
-                                            containerProps={{
-                                                className: "min-w-0",
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                            {opExonerada != 0 && (
-                                <div className="mt-4 flex flex-col-reverse md:flex-row justify-end gap-4">
-                                    <div className="flex items-center">
-                                        <Typography variant="small" color="blue-gray" className="font-normal">Op. Exoneradas :</Typography>
-                                    </div>
-                                    <div>
-                                        <Input
-                                            className="pointer-events-none border-0 bg-gray-200 rounded !border-t-blue-gray-200 focus:!border-t-gray-900"
-                                            readOnly
-                                            color='teal'
-                                            crossOrigin={undefined}
-                                            value={(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(opExonerada)}
-                                            size="md"
-                                            labelProps={{
-                                                className: "before:content-none after:content-none",
-                                            }}
-                                            containerProps={{
-                                                className: "min-w-0",
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                            {icbper != 0 && (
-                                <div className="mt-4 flex flex-col-reverse md:flex-row justify-end gap-4">
-                                    <div className="flex items-center">
-                                        <Typography variant="small" color="blue-gray" className="font-normal">ICBPER :</Typography>
-                                    </div>
-                                    <div>
-                                        <Input
-                                            className="pointer-events-none border-0 bg-gray-200 rounded !border-t-blue-gray-200 focus:!border-t-gray-900"
-                                            readOnly
-                                            color='teal'
-                                            crossOrigin={undefined}
-                                            value={(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(icbper)}
-                                            size="md"
-                                            labelProps={{
-                                                className: "before:content-none after:content-none",
-                                            }}
-                                            containerProps={{
-                                                className: "min-w-0",
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                            {descuentos != 0 && (
-                                <div className="mt-4 flex flex-col-reverse md:flex-row justify-end gap-4">
-                                    <div className="flex items-center">
-                                        <Typography variant="small" color="blue-gray" className="font-normal">Descuentos :</Typography>
-                                    </div>
-                                    <div>
-                                        <Input
-                                            className="pointer-events-none border-0 bg-gray-200 rounded !border-t-blue-gray-200 focus:!border-t-gray-900"
-                                            readOnly
-                                            color='teal'
-                                            crossOrigin={undefined}
-                                            value={(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(descuentos)}
-                                            size="md"
-                                            labelProps={{
-                                                className: "before:content-none after:content-none",
-                                            }}
-                                            containerProps={{
-                                                className: "min-w-0",
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                            {anticipos != 0 && (
-                                <div className="mt-4 flex flex-col-reverse md:flex-row justify-end gap-4">
-                                    <div className="flex items-center">
-                                        <Typography variant="small" color="blue-gray" className="font-normal">Anticipos :</Typography>
-                                    </div>
-                                    <div>
-                                        <Input
-                                            className="pointer-events-none border-0 bg-gray-200 rounded !border-t-blue-gray-200 focus:!border-t-gray-900"
-                                            readOnly
-                                            color='teal'
-                                            crossOrigin={undefined}
-                                            value={(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(anticipos)}
-                                            size="md"
-                                            labelProps={{
-                                                className: "before:content-none after:content-none",
-                                            }}
-                                            containerProps={{
-                                                className: "min-w-0",
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                            {igv != 0 && (
-                                <div className="mt-4 flex flex-col-reverse md:flex-row justify-end gap-4">
-                                    <div className="flex items-center">
-                                        <Typography variant="small" color="blue-gray" className="font-normal">IGV (18%) :</Typography>
-                                    </div>
-                                    <div>
-                                        <Input
-                                            className="pointer-events-none border-0 bg-gray-200 rounded !border-t-blue-gray-200 focus:!border-t-gray-900"
-                                            readOnly
-                                            color='teal'
-                                            crossOrigin={undefined}
-                                            value={(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(igv)}
-                                            size="md"
-                                            labelProps={{
-                                                className: "before:content-none after:content-none",
-                                            }}
-                                            containerProps={{
-                                                className: "min-w-0",
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                            {valorVentaTotal != 0 && (
-                                <div className="mt-4 flex flex-col-reverse md:flex-row justify-end gap-4">
-                                    <div className="flex items-center">
-                                        <Typography variant="small" color="blue-gray" className="font-normal">Valor de Venta :</Typography>
-                                    </div>
-                                    <div>
-                                        <Input
-                                            className="pointer-events-none border-0 bg-gray-200 rounded !border-t-blue-gray-200 focus:!border-t-gray-900"
-                                            readOnly
-                                            color='teal'
-                                            crossOrigin={undefined}
-                                            value={(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(valorVentaTotal)}
-                                            size="md"
-                                            placeholder="Op. Gravadas"
-                                            labelProps={{
-                                                className: "before:content-none after:content-none",
-                                            }}
-                                            containerProps={{
-                                                className: "min-w-0",
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                            {importeTotal != 0 && (
-                                <>
-                                    <div className="mt-4 flex justify-end gap-4">
-                                        <div className="flex items-center">
+                            {/* REDISEÑO CON COLUMNAS */}
+                            <div className="grid grid-cols-8 gap-2 justify-items-end mx-2">
+                                {opGravadas != 0 && (
+                                    <>
+                                        <div className="col-start-7 flex items-center">
+                                            <Typography variant="small" color="blue-gray" className="font-semibold">Op. Gravada :</Typography>
+                                        </div>
+                                        <div className="col-end-9 flex items-center">
+                                            <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(opGravadas)}</Typography>
+                                        </div>
+                                    </>
+                                )}
+                                {opInafectas != 0 && (
+                                    <>
+                                        <div className="col-start-7 flex items-center">
+                                            <Typography variant="small" color="blue-gray" className="font-semibold">Op. Inafecta :</Typography>
+                                        </div>
+                                        <div className="col-end-9 flex items-center">
+                                            <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(opInafectas)}</Typography>
+                                        </div>
+                                    </>
+                                )}
+                                {opExonerada != 0 && (
+                                    <>
+                                        <div className="col-start-7 flex items-center">
+                                            <Typography variant="small" color="blue-gray" className="font-semibold">Op. Exonerada :</Typography>
+                                        </div>
+                                        <div className="col-end-9 flex items-center">
+                                            <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(opExonerada)}</Typography>
+                                        </div>
+                                    </>
+                                )}
+                                {icbper != 0 && (
+                                    <>
+                                        <div className="col-start-7 flex items-center">
+                                            <Typography variant="small" color="blue-gray" className="font-semibold">ICBPER :</Typography>
+                                        </div>
+                                        <div className="col-end-9 flex items-center">
+                                            <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(icbper)}</Typography>
+                                        </div>
+                                    </>
+                                )}
+                                {descuentos != 0 && (
+                                    <>
+                                        <div className="col-start-7 flex items-center">
+                                            <Typography variant="small" color="blue-gray" className="font-semibold">Descuentos :</Typography>
+                                        </div>
+                                        <div className="col-end-9 flex items-center">
+                                            <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(descuentos)}</Typography>
+                                        </div>
+                                    </>
+                                )}
+                                {anticipos != 0 && (
+                                    <>
+                                        <div className="col-start-7 flex items-center">
+                                            <Typography variant="small" color="blue-gray" className="font-semibold">Anticipos :</Typography>
+                                        </div>
+                                        <div className="col-end-9 flex items-center">
+                                            <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(anticipos)}</Typography>
+                                        </div>
+                                    </>
+                                )}
+                                {igv != 0 && (
+                                    <>
+                                        <div className="col-start-7 flex items-center">
+                                            <Typography variant="small" color="blue-gray" className="font-semibold">IGV (18%) :</Typography>
+                                        </div>
+                                        <div className="col-end-9 flex items-center">
+                                            <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(igv)}</Typography>
+                                        </div>
+                                    </>
+                                )}
+                                {valorVentaTotal != 0 && (
+                                    <>
+                                        <div className="col-start-7 flex items-center">
+                                            <Typography variant="small" color="blue-gray" className="font-semibold">Valor de Venta :</Typography>
+                                        </div>
+                                        <div className="col-end-9 flex items-center">
+                                            <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(valorVentaTotal)}</Typography>
+                                        </div>
+                                    </>
+                                )}
+                                {importeTotal != 0 && (
+                                    <>
+                                        <div className="col-start-7 flex items-center">
                                             <Typography variant="h5" color="blue-gray" className="font-semibold">Importe Total :</Typography>
                                         </div>
-                                        <div className='w-auto'>
-                                            <Input
-                                                className="pointer-events-none border-0 bg-gray-200 !border-t-blue-gray-200 text-lg font-semibold"
-                                                readOnly
-                                                color='teal'
-                                                crossOrigin={undefined}
-                                                value={(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(importeTotal)}
-                                                size="md"
-                                                labelProps={{
-                                                    className: "before:content-none after:content-none",
-                                                }}
-                                                containerProps={{
-                                                    className: "min-w-0",
-                                                }}
-                                            />
+                                        <div className="col-end-9 flex items-center">
+                                            <Typography variant="h5" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(importeTotal)}</Typography>
                                         </div>
-                                    </div>
-                                    <hr className='my-4 border-blue-gray-300' />
-                                </>
-                            )}
+                                    </>
+                                )}
+                            </div>
                         </>
                     )}
 
                     {/* BOTÓN PARA ENVIAR DOCUMENTO */}
                     {IdTipoDocumento != '3' && (
-                        <div className="justify-end flex gap-4">
-                            <Button size="md" className="flex items-center gap-3 color-button"
-                                disabled={!importeTotal || !cliente.Nombre || (IdTipoDocumento == '1' && NroDocumento_Cliente.length < 11) || (IdTipoDocumento == '2' && NroDocumento_Cliente.length < 8)}
-                                onClick={() =>
-                                    functionConfirmarDocumento()
-                                }
-                            >
-                                <DocumentArrowUpIcon strokeWidth={2} className='h-5 w-5'
-                                />
-                                ENVIAR {IdTipoDocumento == '1' ? 'FACTURA' : 'BOLETA'}
-                            </Button>
-                        </div>
+                        <>
+                            <hr className='my-4 border-blue-gray-300' />
+                            <div className="justify-end flex gap-4">
+                                <Button size="md" className="flex items-center gap-3 color-button"
+                                    disabled={
+                                        !importeTotal ||
+                                        !cliente.Nombre ||
+                                        (IdTipoDocumento === '1' && (NroDocumento_Cliente.length < 11 || !dataFactura.fechaEmision || !dataFactura.fechaVencimiento)) ||
+                                        (IdTipoDocumento === '2' && NroDocumento_Cliente.length < 8 || !dataBoleta.fechaEmision)
+                                    }
+                                    onClick={() =>
+                                        functionConfirmarDocumento()
+                                    }
+                                >
+                                    <DocumentArrowUpIcon strokeWidth={2} className='h-5 w-5'
+                                    />
+                                    ENVIAR {IdTipoDocumento == '1' ? 'FACTURA' : 'BOLETA'}
+                                </Button>
+                            </div>
+                        </>
                     )}
 
                 </CardBody>
@@ -1611,3 +1467,58 @@ const Registro = () => {
 }
 
 export default Registro;
+
+interface Cliente {
+    Id: number,
+    Nombre: string,
+    Direccion: string,
+    Correo: string,
+}
+interface DatosBoleta {
+    fechaEmision: string;
+    moneda: string;
+}
+interface DatosFactura {
+    condicionPago: string;
+    moneda: string;
+    fechaEmision: string;
+    fechaVencimiento: string;
+    vendedor: string;
+    guiaRemision: string;
+    nroPedido: string;
+    ordenCompra: string;
+    observacion: string;
+}
+interface DatosNCredito {
+    nroNotaCredito: string
+}
+interface Producto {
+    Tipo_Tributo: string,
+    Bien_Servicio: string,
+    Codigo_Producto: string,
+    Descripcion: string,
+    Impuesto_Bolsa: string,
+    ICBPER: number,
+    Cantidad: string,
+    Unidad_Medida: string,
+    Valor_Unitario: string,
+    Importe: number,
+}
+interface Empresa {
+    Nro_Ruc: string;
+    Razon_Social: string;
+    Serie_F: string;
+    Serie_B: string;
+    Serie_Fn: string;
+    Serie_Bn: string;
+    Igv: number;
+    Icbper: string;
+    Logo: string;
+    Direccion: string;
+    Telefono: string;
+    Correo: string;
+    Web: string;
+    Departamento: string;
+    Provincia: string;
+    Distrito: string;
+}

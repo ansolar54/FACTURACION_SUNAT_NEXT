@@ -31,6 +31,11 @@ import { useRouter } from 'next/navigation';
 import { ObtenerListadoDocumentos } from '@/services/listado_documento';
 import { DescargarCDRBase64, DescargarPDFBase64, DescargarZIPBase64 } from '@/services/factura';
 
+import {
+    FontAwesomeIcon,
+    faFilePdf
+} from '@/shared/font-awesome'
+
 interface Documento {
     Id: number,
     Id_Cliente: number,
@@ -586,7 +591,7 @@ export default function page() {
                                                     >
                                                         <EyeIcon
                                                             className={`h-6 w-6 ${ToolTipEditId === item.Id ? 'color-text' : 'text-gray-800'}`}
-                                                        />
+                                                        /> 
                                                     </IconButton>
                                                 </Tooltip>
                                                 <Tooltip
@@ -605,7 +610,8 @@ export default function page() {
                                                         onMouseOver={() => setToolTipDeleteId(item.Id)}
                                                         onMouseLeave={() => setToolTipDeleteId(null)}
                                                     >
-                                                        <DocumentIcon className={`h-6 w-6 ${ToolTipDeleteId === item.Id ? 'color-text' : 'text-gray-800'}`} />
+                                                        <FontAwesomeIcon className={`h-6 w-6 ${ToolTipDeleteId === item.Id ? 'color-text' : 'text-gray-800'}`} icon={faFilePdf}  />
+                                                        {/* <DocumentIcon className={`h-6 w-6 ${ToolTipDeleteId === item.Id ? 'color-text' : 'text-gray-800'}`} /> */}
                                                     </IconButton>
                                                 </Tooltip>
                                                 <Tooltip

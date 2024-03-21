@@ -224,7 +224,7 @@ const EditCliente: React.FC<EditClienteProps> = ({
                     unmount: { scale: 0.9, y: -100 },
                 }}>
                 <Toaster />
-                <DialogHeader>Editar Cliente</DialogHeader>
+                <DialogHeader className='color-text'>Editar Cliente</DialogHeader>
                 <DialogBody divider>
                     <Card color="transparent" shadow={false}>
                         <form>

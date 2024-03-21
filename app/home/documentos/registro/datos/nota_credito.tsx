@@ -525,7 +525,7 @@ export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoP
                     <div>
                         <Input
                             className='cursor-not-allowed'
-                            readOnly
+                            disabled
                             color='teal'
                             crossOrigin={undefined}
                             name="numeroFE"

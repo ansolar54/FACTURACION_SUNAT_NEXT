@@ -18,7 +18,7 @@ type Body = {
     Nombre: string;
 };
 
-export interface Cliente_Add{
+export interface Cliente_Add {
     Nombres: string,
     Apellidos: string,
     Razon_Social: string,
@@ -191,30 +191,29 @@ const AddCliente: React.FC<AddClienteProps> = ({
                 }}
             >
                 <Toaster />
-                <DialogHeader>Agregar Cliente</DialogHeader>
+                <DialogHeader className='color-text'>Agregar Cliente</DialogHeader>
                 <DialogBody divider>
                     <Card color="transparent" shadow={false}>
                         <form>
                             <div className="mb-4 flex flex-col gap-6">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Select
-                                        color='teal'
-                                        error={showErrors.Id_Tipo_Doc && (cliente.Id_Tipo_Doc == 0)}
-                                        label="Tipo de Documento"
-                                        name="Id_Tipo_Doc"
-                                        size="md"
-                                        value={cliente.Id_Tipo_Doc.toString()}
-                                        key={cliente.Id_Tipo_Doc}
-                                        onChange={(e) => {
-                                            handleChange('Id_Tipo_Doc', e)
-                                        }}
-                                    >
-                                        {ListaDocCliente.map((tipo) => (
-                                            <Option key={tipo.Id} value={tipo.Id.toString()}>
-                                                {tipo.Nombre}
-                                            </Option>
-                                        ))}
-                                    </Select>
+                                <div className="grid grid-cols-2 gap-2">                                        <Select
+                                            color='teal'
+                                            error={showErrors.Id_Tipo_Doc && (cliente.Id_Tipo_Doc == 0)}
+                                            label="Tipo de Documento"
+                                            name="Id_Tipo_Doc"
+                                            size="md"
+                                            value={cliente.Id_Tipo_Doc.toString()}
+                                            key={cliente.Id_Tipo_Doc}
+                                            onChange={(e) => {
+                                                handleChange('Id_Tipo_Doc', e)
+                                            }}
+                                        >
+                                            {ListaDocCliente.map((tipo) => (
+                                                <Option key={tipo.Id} value={tipo.Id.toString()}>
+                                                    {tipo.Nombre}
+                                                </Option>
+                                            ))}
+                                        </Select>
                                     {cliente.Id_Tipo_Doc != 4 && (
                                         <div>
                                             <Input

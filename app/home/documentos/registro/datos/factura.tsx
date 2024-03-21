@@ -87,7 +87,7 @@ export default function Factura({ onSendDataFactura: onSendDataFactura }: Factur
           setfechaVencimiento(fechaEmision)
         }
         else {
-          setfechaVencimiento('')
+          setfechaVencimiento(fechaEmision)
         }
         break;
       case "fechaEmision":
@@ -98,6 +98,9 @@ export default function Factura({ onSendDataFactura: onSendDataFactura }: Factur
         else if (value > fechaVencimiento) {
           setfechaVencimiento("")
         }
+        if(condicionPago == 'Contado'){
+          setfechaVencimiento(value)
+        }
         break;
       default:
         break;
@@ -106,8 +109,8 @@ export default function Factura({ onSendDataFactura: onSendDataFactura }: Factur
 
   return (
     <>
-      <div className='my-4 flex flex-col gap-6'>
-        <div className="grid grid-cols-5 gap-4">
+      <div className='my-3 flex flex-col'>
+        <div className="grid grid-cols-6 gap-2">
           <Select
             color='teal'
             label="Condición de Pago"
