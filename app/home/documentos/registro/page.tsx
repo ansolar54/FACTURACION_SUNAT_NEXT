@@ -57,6 +57,13 @@ const Registro = () => {
         "Acción"
     ];
 
+    const TABLE_HEAD_CUOTAS = [
+        // "Bien / Servicio",
+        "Cuotas",
+        "Fecha de Pago",
+        "Monto",
+    ];
+
     // CAMPOS CLIENTE
     const [NroDocumento_Cliente, setNroDocumento_Cliente] = useState("")
     const [cliente, setCliente] = useState<Cliente>({
@@ -515,6 +522,8 @@ const Registro = () => {
     // FUNCIONES PARA GENERAR, ENVIAR Y REGISTRAR FACTURA
     function FunctionGenerarXMLFactura() {
         let data_detail_xml = [];
+        let data_cuotas_xml = [];
+
         let contadorID = 1
 
         for (let i = 0; i < dataProducto.length; i++) {
@@ -533,21 +542,33 @@ const Registro = () => {
             data_detail_xml.push(model_detail_xml);
         }
 
+        // for (let index = 0; index < cuotas.length; index++) {
+        //     const element = cuotas[index];
+        //     let model_cuotas_xml = {
+        //         Descripcion: element.descripcion,
+        //         Importe: parseFloat(element.monto),
+        //         Fecha_Pago: element.fechaPago,
+
+        //     }
+        //     data_cuotas_xml.push(model_cuotas_xml)
+        // }
+
         let Op_Inafectas = opInafectas ? opInafectas : icbper;
         if (opInafectas && icbper) {
             Op_Inafectas = opInafectas + icbper;
         }
 
         let model_factura_xml = {
-            ruc_Emisor: rucEmisor,
-            nro_Documento: nroFactura,
-            cliente: cliente.Nombre,
-            nro_Doc_Cliente: NroDocumento_Cliente,
-            direccion_Cliente: cliente.Direccion,
-            fecha_Emision: dataFactura.fechaEmision,
-            fecha_Vencimiento: dataFactura.fechaVencimiento,
-            condicion_Pago: dataFactura.condicionPago,
-            moneda: dataFactura.moneda,
+            Ruc_Emisor: rucEmisor,
+            Nro_Documento: nroFactura,
+            Cliente: cliente.Nombre,
+            Nro_Doc_Cliente: NroDocumento_Cliente,
+            // direccion_Cliente: cliente.Direccion, // No se está enviando
+            Fecha_Emision: dataFactura.fechaEmision,
+            Fecha_Vencimiento: dataFactura.fechaVencimiento,
+            Condicion_Pago: dataFactura.condicionPago,
+            // Cuotas: dataFactura.condicionPago == 'Contado' ? [] : data_cuotas_xml,
+            Moneda: dataFactura.moneda,
             Op_Gravadas: opGravadas,
             Op_Inafectas: Op_Inafectas,
             Op_Exonerada: opExonerada,
@@ -560,23 +581,24 @@ const Registro = () => {
         }
 
         console.log(model_factura_xml)
-        GenerarXMLFactura(model_factura_xml).then((result: any) => {
-            if (result.indicator == 1) {
-                toast.success(
-                    `${result.message}`, {
-                    duration: 2000,
-                    position: 'top-center',
-                });
-                setTimeout(FunctionEnviarFactura, 2000)
-            }
-            else {
-                toast.error(
-                    `${result.message}`, {
-                    duration: 3000,
-                    position: 'top-center',
-                });
-            }
-        })
+
+        // GenerarXMLFactura(model_factura_xml).then((result: any) => {
+        //     if (result.indicator == 1) {
+        //         toast.success(
+        //             `${result.message}`, {
+        //             duration: 2000,
+        //             position: 'top-center',
+        //         });
+        //         setTimeout(FunctionEnviarFactura, 2000)
+        //     }
+        //     else {
+        //         toast.error(
+        //             `${result.message}`, {
+        //             duration: 3000,
+        //             position: 'top-center',
+        //         });
+        //     }
+        // })
     }
 
     function FunctionEnviarFactura() {
@@ -846,13 +868,11 @@ const Registro = () => {
                             Id: dataBoletaCliente.Id,
                             Empresa: Empresa,
                             Logo: dataEmpresa.Logo,
-                            // CAMBIAR
                             Ruc_Emisor: dataBoletaCliente.Ruc_Empresa,
                             Nro_Documento: dataBoletaCliente.Nro_Documento,
                             Cliente: dataBoletaCliente.Cliente,
                             Nro_Doc_Cliente: dataBoletaCliente.Nro_Doc_Cliente,
                             Direccion_Cliente: dataBoletaCliente.Direccion_Cliente,
-                            //
                             Fecha_Emision: dataBoletaCliente.Fecha_Emision,
                             Fecha_Vencimiento: '',
                             Condicion_Pago: '',
@@ -983,6 +1003,195 @@ const Registro = () => {
         }
     }
 
+
+    // PRUEBAS PARA CUOTAS AL CRÉDITO
+    const [montoTotal, setMontoTotal] = useState<string>('');
+    const [numeroCuotas, setNumeroCuotas] = useState<number>(1);
+    const [plazoPago, setPlazoPago] = useState<string>('');
+
+    const [cuotas, setCuotas] = useState<{ descripcion: string, monto: string, fechaPago: string }[]>([]);
+
+    const ListadoPlazoPago = [
+        { name: 'QUINCENAL', code: 'QUINCENAL' },
+        { name: 'MENSUAL', code: 'MENSUAL' },
+        { name: 'BIMESTRAL', code: 'BIMESTRAL' },
+        { name: 'TRIMESTRAL', code: 'TRIMESTRAL' },
+        { name: 'SEMESTRAL', code: 'SEMESTRAL' },
+        { name: 'MANUAL', code: 'MANUAL' },
+    ];
+
+    const calcularCuotas = (montoTotal: number, numeroCuotas: number): number[] => {
+        const cuotaExacta = montoTotal / numeroCuotas;
+        const cuotaRedondeada = Math.floor(cuotaExacta * 100) / 100;
+        let diferencia = (montoTotal - (cuotaRedondeada * numeroCuotas)).toFixed(2);
+    
+        let cuotas = Array(numeroCuotas).fill(cuotaRedondeada);
+        let index = 0;
+    
+        while (parseFloat(diferencia) !== 0) {
+            cuotas[index] += 0.01;
+            diferencia = (parseFloat(diferencia) - 0.01).toFixed(2);
+            index = (index + 1) % numeroCuotas;
+        }
+    
+        return cuotas;
+    };
+
+    const generarNuevaCuota = (index: number, cuota: number, plazoPago: string): { descripcion: string, monto: string, fechaPago: string } => {
+        let fechaPago = new Date();
+        if (plazoPago === 'QUINCENAL') {
+            fechaPago.setDate(fechaPago.getDate() + (index * 15) + 1); // Sumar 15 días por cada cuota
+        } else if (plazoPago === 'MENSUAL') {
+            fechaPago.setMonth(fechaPago.getMonth() + index + 1); // Sumar 1 mes por cada cuota
+        } else if (plazoPago === 'BIMESTRAL') {
+            fechaPago.setMonth(fechaPago.getMonth() + (index * 2) + 1); // Sumar 2 meses por cada cuota
+        } else if (plazoPago === 'TRIMESTRAL') {
+            fechaPago.setMonth(fechaPago.getMonth() + (index * 3) + 1); // Sumar 3 meses por cada cuota
+        } else if (plazoPago === 'SEMESTRAL') {
+            fechaPago.setMonth(fechaPago.getMonth() + (index * 6) + 1); // Sumar 6 meses por cada cuota
+        }
+    
+        const cuotaNumero = index + 1;
+        const numero = 'CUOTA ' + cuotaNumero.toString().padStart(2, '0'); // Formatear el número de la cuota
+        return {
+            descripcion: numero,
+            monto: cuota.toFixed(2).toString(), // Limitar a 2 decimales
+            fechaPago: fechaPago.toISOString().split('T')[0], // Convertir fecha a formato ISO
+        };
+    };
+
+    const actualizarCuotas = () => {
+        const cuotasCalculadas = calcularCuotas(parseFloat(montoTotal), numeroCuotas);
+        const newCuotas = cuotasCalculadas.map((cuota, index) => generarNuevaCuota(index, cuota, plazoPago));
+        setCuotas(newCuotas);
+    };
+
+    useEffect(() => {
+        if (montoTotal.trim() !== '' && !isNaN(parseFloat(montoTotal))) {
+            actualizarCuotas();
+        }
+    }, [numeroCuotas, plazoPago]);
+
+
+    // useEffect(() => {
+    //     const calcularCuotas = (montoTotal: number, numeroCuotas: number): number[] => {
+    //         const cuotaExacta = montoTotal / numeroCuotas;
+    //         const cuotaRedondeada = Math.floor(cuotaExacta * 100) / 100;
+    //         let diferencia = (montoTotal - (cuotaRedondeada * numeroCuotas)).toFixed(2);
+
+    //         let cuotas = Array(numeroCuotas).fill(cuotaRedondeada);
+    //         let index = 0;
+
+    //         while (parseFloat(diferencia) !== 0) {
+    //             cuotas[index] += 0.01;
+    //             diferencia = (parseFloat(diferencia) - 0.01).toFixed(2);
+    //             index = (index + 1) % numeroCuotas;
+    //         }
+
+    //         return cuotas;
+    //     };
+
+    //     let montoCuota = 0;
+    //     if (montoTotal.trim() !== '' && !isNaN(parseFloat(montoTotal))) {
+    //         montoCuota = parseFloat(montoTotal) / numeroCuotas;
+    //     }
+
+    //     const cuotas = calcularCuotas(parseFloat(montoTotal), numeroCuotas);
+
+    //     const newCuotas = cuotas.map((cuota, index) => {
+    //         let fechaPago = new Date();
+    //         if (plazoPago === 'QUINCENAL') {
+    //             fechaPago.setDate(fechaPago.getDate() + (index * 15) + 1); // Sumar 15 días por cada cuota
+    //         } else if (plazoPago === 'MENSUAL') {
+    //             fechaPago.setMonth(fechaPago.getMonth() + index + 1); // Sumar 1 mes por cada cuota
+    //         } else if (plazoPago === 'BIMESTRAL') {
+    //             fechaPago.setMonth(fechaPago.getMonth() + (index * 2) + 1); // Sumar 2 meses por cada cuota
+    //         } else if (plazoPago === 'TRIMESTRAL') {
+    //             fechaPago.setMonth(fechaPago.getMonth() + (index * 3) + 1); // Sumar 3 meses por cada cuota
+    //         } else if (plazoPago === 'SEMESTRAL') {
+    //             fechaPago.setMonth(fechaPago.getMonth() + (index * 6) + 1); // Sumar 6 meses por cada cuota
+    //         }
+
+    //         const cuotaNumero = index + 1;
+    //         const numero = 'CUOTA ' + cuotaNumero.toString().padStart(2, '0'); // Formatear el número de la cuota
+    //         return {
+    //             descripcion: numero,
+    //             monto: cuota.toFixed(2).toString(), // Limitar a 2 decimales
+    //             fechaPago: fechaPago.toISOString().split('T')[0], // Convertir fecha a formato ISO
+    //         };
+    //     });
+    //     setCuotas(newCuotas);
+    // }, [numeroCuotas, plazoPago]);
+
+    const handleChangeMontoCuota = (index: number, newMonto: string) => {
+        const newCuotas = [...cuotas];
+        newCuotas[index - 1] = { ...newCuotas[index - 1], monto: newMonto };
+        setCuotas(newCuotas);
+
+        // Calcular el nuevo monto total sumando todos los montos de cuotas
+        const total = newCuotas.reduce((acc, cuota) => {
+
+            // Convertir el monto a número antes de sumarlo
+            const montoNumerico = parseFloat(cuota.monto);
+
+            // Verificar si el monto es un número válido
+            if (!isNaN(montoNumerico)) {
+                return acc + montoNumerico;
+            } else {
+                return acc;
+            }
+        }, 0);
+        setMontoTotal(total.toString());
+    };
+
+    const handleChangePlazoPago = (i: number, newFechaPago: string) => {
+        const newCuotas = [...cuotas];
+        newCuotas[i - 1] = { ...newCuotas[i - 1], fechaPago: newFechaPago };
+        setCuotas(newCuotas);
+    }
+
+    const generarFilasCuotas = (numeroCuotas: number, plazoPago: string): JSX.Element[] => {
+        const filas: JSX.Element[] = [];
+        for (let i = 1; i <= numeroCuotas; i++) {
+            filas.push(
+                <tr key={i}>
+                    <td>{i.toString().padStart(2, '0')}</td>
+                    <td>
+                        <Input
+                            color='teal'
+                            crossOrigin={undefined}
+                            type="date"
+                            value={cuotas[i - 1]?.fechaPago}
+
+                            onChange={(e) => {
+                                handleChangePlazoPago(i, e.target.value)
+                            }}
+                        />
+                    </td>
+                    <td>
+                        <Input
+                            color='teal'
+                            crossOrigin={undefined}
+                            value={cuotas[i - 1]?.monto}
+                            onChange={(e) => {
+                                const newValue = e.target.value.trim();
+                                if (/^\d{0,6}(\.\d{0,2})?$/.test(newValue)) {
+                                    handleChangeMontoCuota(i, newValue);
+                                }
+                            }}
+                        />
+                    </td>
+                </tr>
+            );
+        }
+        return filas;
+    };
+
+    const guardarCuotas = () => {
+        console.log('Cuotas guardadas:', cuotas);
+    };
+
+
     return (
         <>
             <AddCliente
@@ -1072,7 +1281,7 @@ const Registro = () => {
                         <Boleta onSendDataBoleta={handleDataBoleta} />
                     )}
                     {IdTipoDocumento == '3' && (
-                        <NotaCredito onSendDataNCredito={handleDataNotaCredito} rucEmisor={rucEmisor} />
+                        <NotaCredito onSendDataNCredito={handleDataNotaCredito} rucEmisor={rucEmisor} dataEmpresa={dataEmpresa} />
                     )}
 
                     {/* DATOS DEL CLIENTE */}
@@ -1436,6 +1645,90 @@ const Registro = () => {
                         </>
                     )}
 
+                    {/* DATOS DE LAS CUOTAS */}
+                    {IdTipoDocumento != '3' && (
+                        <div className="justify-start flex gap-4">
+                            <Chip variant="outlined" value="DETALLE DE CUOTAS" className="rounded-lg" color='teal' size="md" />
+                        </div>
+                    )}
+
+                    {/* campos cabecera cuota */}
+                    {IdTipoDocumento != '3' && (
+                        <div className="my-4 flex flex-col">
+                            <div className="grid grid-cols-4 gap-2">
+                                <div>
+                                    <Input
+                                        color='teal'
+                                        crossOrigin={undefined}
+                                        value={montoTotal.toString()}
+                                        size="md"
+                                        label="Monto neto pendiente de pago"
+                                        onChange={(e) => setMontoTotal((e.target.value))}
+                                    />
+                                </div>
+                                <div>
+                                    <Input
+                                        type='number'
+                                        color='teal'
+                                        crossOrigin={undefined}
+                                        value={numeroCuotas.toString()}
+                                        size="md"
+                                        label="Número de cuotas"
+                                        max={12}
+                                        min={1}
+                                        onChange={(e) => setNumeroCuotas(parseInt(e.target.value))}
+                                    />
+                                </div>
+                                <Select
+                                    color='teal'
+                                    label="Plazo de pago"
+                                    // name="condicionPago"
+                                    size="md"
+                                    value={plazoPago}
+                                    // key={condicionPago}
+                                    onChange={(e) => {
+                                        setPlazoPago(e as string);
+                                        // handleChangePlazoPago(e!)
+                                    }}
+                                >
+                                    {ListadoPlazoPago.map((tipo) => (
+                                        <Option key={tipo.code} value={tipo.code}>
+                                            {tipo.name}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* TABLA CUOTAS */}
+                    {IdTipoDocumento != '3' && (
+                        <div className="my-4 overflow-x-auto">
+                            <table className="w-full min-w-max table-auto text-left rounded-lg overflow-hidden">
+                                <thead>
+                                    <tr>
+                                        {TABLE_HEAD_CUOTAS.map((head) => (
+                                            <th key={head} className="color-bg-teal-500 border-y border-blue-gray-100 p-4">
+                                                <Typography
+                                                    variant="h6"
+                                                    color="white"
+                                                    className="font-semibold leading-none"
+                                                >
+                                                    {head}
+                                                </Typography>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {generarFilasCuotas(numeroCuotas, plazoPago)}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    <button onClick={guardarCuotas}>Guardar Cuotas</button>
+
                     {/* BOTÓN PARA ENVIAR DOCUMENTO */}
                     {IdTipoDocumento != '3' && (
                         <>
@@ -1444,9 +1737,9 @@ const Registro = () => {
                                 <Button size="md" className="flex items-center gap-3 color-button"
                                     disabled={
                                         !importeTotal ||
-                                        !cliente.Nombre ||
-                                        (IdTipoDocumento === '1' && (NroDocumento_Cliente.length < 11 || !dataFactura.fechaEmision || !dataFactura.fechaVencimiento)) ||
-                                        (IdTipoDocumento === '2' && NroDocumento_Cliente.length < 8 || !dataBoleta.fechaEmision)
+                                        !cliente.Nombre
+                                        // (IdTipoDocumento == '1' && (NroDocumento_Cliente.length < 11 || !dataFactura.fechaEmision)) ||
+                                        // (IdTipoDocumento == '2' && NroDocumento_Cliente.length < 8 || !dataBoleta.fechaEmision)
                                     }
                                     onClick={() =>
                                         functionConfirmarDocumento()

@@ -16,7 +16,7 @@ import { ObtenerTipo_NotaCredito } from '@/services/tipo_nota_credito';
 import { ModificarEstadoDocumento, ObtenerListadoDocumentos } from '@/services/listado_documento';
 import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { ObtenerFacturaCliente } from '@/services/factura';
-import { EnviarNCredito, GenerarSerieCorrelativo_NotaCredito, GenerarXML_NotaCredito, ObtenerRutaNCredito, RegistrarNCredito } from '@/services/nota_credito';
+import { EnviarNCredito, GenerarPDFNotaCredito, GenerarSerieCorrelativo_NotaCredito, GenerarXML_NotaCredito, ObtenerRutaNCredito, RegistrarNCredito } from '@/services/nota_credito';
 
 import toast, { Toaster } from 'react-hot-toast';
 import {
@@ -43,6 +43,25 @@ interface Documento {
     Estado: string,
 }
 
+interface Empresa {
+    Nro_Ruc: string;
+    Razon_Social: string;
+    Serie_F: string;
+    Serie_B: string;
+    Serie_Fn: string;
+    Serie_Bn: string;
+    Igv: number;
+    Icbper: string;
+    Logo: string;
+    Direccion: string;
+    Telefono: string;
+    Correo: string;
+    Web: string;
+    Departamento: string;
+    Provincia: string;
+    Distrito: string;
+}
+
 interface Result<T> {
     data: T;
     indicator: number
@@ -51,13 +70,17 @@ interface Result<T> {
 interface NCreditoProps {
     onSendDataNCredito: (dataNCredito: DatosNCredito) => void;
     rucEmisor: string;
+    dataEmpresa: Empresa | null;
 }
 
 interface DatosNCredito {
     nroNotaCredito: string
 }
 
-export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoProps) {
+export default function NotaCredito({
+    onSendDataNCredito,
+    rucEmisor,
+    dataEmpresa }: NCreditoProps) {
     //ROUTER
     const router = useRouter()
 
@@ -141,7 +164,6 @@ export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoP
                 setListadoDocumento(result.data);
                 setCurrentPage(page);
                 setTotalItems(result.totalItems);
-                console.log(result);
             } else {
                 setListadoDocumento([]);
             }
@@ -266,7 +288,6 @@ export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoP
         if (Id_Tipo_Documento == 1) {
             const result_1 = await ObtenerFacturaCliente(Nro_Documento, Id_Cliente) as Result<any>;
             const dataFacturaCliente = result_1.data;
-            // console.log(dataFacturaCliente)
             if (result_1.indicator == 1) {
 
                 let data_detail_xml = [];
@@ -317,7 +338,6 @@ export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoP
         else if (Id_Tipo_Documento == 2) {
             const result_1 = await ObtenerBoletaCliente(Nro_Documento, Id_Cliente) as Result<any>;
             const dataBoletaCliente = result_1.data;
-            // console.log(dataBoletaCliente)
 
             if (result_1.indicator == 1) {
                 let data_detail_xml = [];
@@ -367,8 +387,6 @@ export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoP
 
         }
 
-        console.log(NC_factura_xml)
-
         GenerarXML_NotaCredito(NC_factura_xml).then((result: any) => {
             if (result.indicator == 1) {
                 toast.success(
@@ -385,10 +403,187 @@ export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoP
                     position: 'top-center',
                 });
             }
-            console.log(result)
         })
     }
 
+    async function functionArmarPDF(Nro_Documento: string, Id_Cliente: number) {
+        try {
+
+            let NC_modal_pdf = {}
+
+            if (Id_Tipo_Documento == 1) {
+                const result_1 = await ObtenerFacturaCliente(Nro_Documento, Id_Cliente) as Result<any>;
+                const dataFacturaCliente = result_1.data;
+                if (result_1.indicator == 1) {
+
+                    let data_detail = [];
+
+                    for (let i = 0; i < dataFacturaCliente.DetalleDocumento.length; i++) {
+                        const element = dataFacturaCliente.DetalleDocumento[i];
+                        let model_detail = {
+                            Codigo_Producto: element.Codigo_Producto,
+                            Descripcion: element.Descripcion,
+                            Cantidad: element.Cantidad,
+                            Unidad_Medida: element.Unidad_Medida,
+                            Precio_Unitario: element.Precio_Unitario,
+                            Importe: element.Importe,
+                        };
+                        data_detail.push(model_detail);
+                    }
+
+                    let Empresa = {
+                        Razon_Social: dataEmpresa!.Razon_Social,
+                        Direccion: dataEmpresa!.Direccion,
+                        Telefono: dataEmpresa!.Telefono,
+                        Web: dataEmpresa!.Web,
+                        Distrito: dataEmpresa!.Distrito,
+                        Provincia: dataEmpresa!.Provincia,
+                        Departamento: dataEmpresa!.Departamento,
+                        Correo: dataEmpresa!.Correo,
+                        Igv_Percent: dataEmpresa!.Igv
+                    }
+
+                    let Docu_Referencia = {
+                        Tipo_Documento: "FACTURA DE VENTA ELECTRONICA",
+                        Nro_Documento: dataFacturaCliente.Nro_Documento,
+                        Fecha_Documento: dataFacturaCliente.Fecha_Emision,
+                        Tienda: "",
+                        Caja: "",
+                        Vendedor: dataFacturaCliente.Vendedor,
+                        Motivo: motivo
+                    }
+
+                    NC_modal_pdf = {
+                        Id: dataFacturaCliente.Id,
+                        Empresa: Empresa,
+                        Docu_Referencia: Docu_Referencia,
+                        Logo: dataEmpresa!.Logo,
+                        Ruc_Emisor: dataFacturaCliente.Ruc_Empresa,
+                        Nro_Documento: dataFacturaCliente.Nro_Documento,
+                        Cliente: dataFacturaCliente.Cliente,
+                        Nro_Doc_Cliente: dataFacturaCliente.Nro_Doc_Cliente,
+                        Direccion_Cliente: dataFacturaCliente.Direccion_Cliente,
+                        Fecha_Emision: fechaEmision,
+                        Fecha_Vencimiento: '',
+                        Condicion_Pago: dataFacturaCliente.Condicion_Pago,
+                        Moneda: dataFacturaCliente.Moneda,
+                        Nro_Pedido: dataFacturaCliente.Nro_Pedido,
+                        Orden_Compra: dataFacturaCliente.Orden_Compra,
+                        Vendedor: dataFacturaCliente.Vendedor,
+                        Guia_Remision: dataFacturaCliente.Guia_Remision,
+                        Op_Gravadas: dataFacturaCliente.Op_Gravadas,
+                        Op_Inafectas: dataFacturaCliente.Op_Inafectas,
+                        Op_Exonerada: dataFacturaCliente.Op_Exonerada,
+                        Descuentos: dataFacturaCliente.Descuentos,
+                        Anticipos: dataFacturaCliente.Anticipos,
+                        Igv: dataFacturaCliente.Igv,
+                        Importe_Total: dataFacturaCliente.Importe_Total,
+                        Observacion: dataFacturaCliente.Observacion,
+                        Serie: dataFacturaCliente.Serie,
+                        Correlativo: dataFacturaCliente.Correlativo,
+                        DetalleDocumento: data_detail,
+                    }
+                }
+            }
+            else if (Id_Tipo_Documento == 2) {
+                const result_1 = await ObtenerBoletaCliente(Nro_Documento, Id_Cliente) as Result<any>;
+                const dataBoletaCliente = result_1.data;
+                if (result_1.indicator == 1) {
+
+                    let data_detail = [];
+
+                    for (let i = 0; i < dataBoletaCliente.DetalleDocumento.length; i++) {
+                        const element = dataBoletaCliente.DetalleDocumento[i];
+                        let model_detail = {
+                            Codigo_Producto: element.Codigo_Producto,
+                            Descripcion: element.Descripcion,
+                            Cantidad: element.Cantidad,
+                            Unidad_Medida: element.Unidad_Medida,
+                            Precio_Unitario: element.Precio_Unitario,
+                            Importe: element.Importe,
+                        };
+                        data_detail.push(model_detail);
+                    }
+
+                    let Empresa = {
+                        Razon_Social: dataEmpresa!.Razon_Social,
+                        Direccion: dataEmpresa!.Direccion,
+                        Telefono: dataEmpresa!.Telefono,
+                        Web: dataEmpresa!.Web,
+                        Distrito: dataEmpresa!.Distrito,
+                        Provincia: dataEmpresa!.Provincia,
+                        Departamento: dataEmpresa!.Departamento,
+                        Correo: dataEmpresa!.Correo,
+                        Igv_Percent: dataEmpresa!.Igv
+                    }
+
+                    let Docu_Referencia = {
+                        Tipo_Documento: "BOLETA DE VENTA ELECTRONICA",
+                        Nro_Documento: dataBoletaCliente.Nro_Documento,
+                        Fecha_Documento: dataBoletaCliente.Fecha_Emision,
+                        Tienda: "",
+                        Caja: "",
+                        Vendedor: dataBoletaCliente.Vendedor,
+                        Motivo: motivo
+                    }
+
+                    NC_modal_pdf = {
+                        Id: dataBoletaCliente.Id,
+                        Empresa: Empresa,
+                        Docu_Referencia: Docu_Referencia,
+                        Logo: dataEmpresa!.Logo,
+                        Ruc_Emisor: dataBoletaCliente.Ruc_Empresa,
+                        Nro_Documento: dataBoletaCliente.Nro_Documento,
+                        Cliente: dataBoletaCliente.Cliente,
+                        Nro_Doc_Cliente: dataBoletaCliente.Nro_Doc_Cliente,
+                        Direccion_Cliente: dataBoletaCliente.Direccion_Cliente,
+                        Fecha_Emision: fechaEmision,
+                        Fecha_Vencimiento: '',
+                        Condicion_Pago: '',
+                        Moneda: dataBoletaCliente.Moneda,
+                        Nro_Pedido: '',
+                        Orden_Compra: '',
+                        Vendedor: '',
+                        Guia_Remision: '',
+                        Op_Gravadas: dataBoletaCliente.Op_Gravadas,
+                        Op_Inafectas: dataBoletaCliente.Op_Inafectas,
+                        Op_Exonerada: dataBoletaCliente.Op_Exonerada,
+                        Descuentos: dataBoletaCliente.Descuentos,
+                        Anticipos: dataBoletaCliente.Anticipos,
+                        Igv: dataBoletaCliente.Igv,
+                        Importe_Total: dataBoletaCliente.Importe_Total,
+                        Observacion: '',
+                        Serie: dataBoletaCliente.Serie,
+                        Correlativo: dataBoletaCliente.Correlativo,
+                        DetalleDocumento: data_detail,
+                    }
+                }
+
+            }
+
+            console.log(NC_modal_pdf)
+
+            GenerarPDFNotaCredito(NC_modal_pdf).then((result: any) => {
+                if (result.indicator == 1) {
+                    toast.success(
+                        `${result.message}`, {
+                        duration: 2000,
+                        position: 'top-center',
+                    });
+                }
+                else {
+                    toast.error(
+                        `${result.message}`, {
+                        duration: 3000,
+                        position: 'top-center',
+                    });
+                }
+            })
+
+        } catch (error) {
+
+        }
+    }
     async function functionEnviarNCredito() {
         let ruta_zip = "";
         ObtenerRutaNCredito(nroNotaCredito, rucEmisor).then((result_2: any) => {
@@ -445,7 +640,7 @@ export default function NotaCredito({ onSendDataNCredito, rucEmisor }: NCreditoP
                 });
                 functionGenerarCorrelativo_NC(rucEmisor, Id_Tipo_Documento)
                 setTimeout(FunctionModificarEstadoDocumento, 2000)
-
+                functionArmarPDF(numeroFE, Id_Cliente);
             }
             else {
                 toast.error(

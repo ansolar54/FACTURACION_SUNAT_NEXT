@@ -98,7 +98,7 @@ export default function Factura({ onSendDataFactura: onSendDataFactura }: Factur
         else if (value > fechaVencimiento) {
           setfechaVencimiento("")
         }
-        if(condicionPago == 'Contado'){
+        if (condicionPago == 'Contado') {
           setfechaVencimiento(value)
         }
         break;
@@ -157,21 +157,25 @@ export default function Factura({ onSendDataFactura: onSendDataFactura }: Factur
               handleChange('fechaEmision', e.target.value)
             }}
           />
-          <Input
-            className={condicionPago == 'Contado' ? 'pointer-events-none bg-gray-200' : ''}
-            type='date'
-            color='teal'
-            crossOrigin={undefined}
-            name="fechaVencimiento"
-            value={fechaVencimiento}
-            size="md"
-            label="Fecha Vencimiento"
-            onChange={(e) => {
-              setfechaVencimiento(e.target.value)
-            }}
-            readOnly={condicionPago == "Contado" ? true : false}
-            min={fechaEmision}
-          />
+          {condicionPago == 'Contado' && (
+            <div>
+              <Input
+                type='date'
+                color='teal'
+                crossOrigin={undefined}
+                name="fechaVencimiento"
+                value={fechaVencimiento}
+                size="md"
+                label="Fecha Vencimiento"
+                onChange={(e) => {
+                  setfechaVencimiento(e.target.value)
+                }}
+                disabled={condicionPago == "Contado" ? true : false}
+                min={fechaEmision}
+              />
+            </div>
+          )}
+
           <div>
             <Input
               color='teal'
