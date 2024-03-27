@@ -17,7 +17,8 @@ import {
     ArrowDownCircleIcon,
     AdjustmentsHorizontalIcon,
     ChevronRightIcon, ChevronDownIcon,
-    DocumentMagnifyingGlassIcon
+    DocumentMagnifyingGlassIcon,
+    XMarkIcon 
 } from '@heroicons/react/24/outline'
 
 export {
@@ -37,5 +38,6 @@ export {
     ArrowDownCircleIcon,
     AdjustmentsHorizontalIcon,
     ChevronRightIcon, ChevronDownIcon,
-    DocumentMagnifyingGlassIcon
+    DocumentMagnifyingGlassIcon,
+    XMarkIcon 
 }

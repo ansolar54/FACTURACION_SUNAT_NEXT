@@ -22,6 +22,7 @@ import {
     UserPlusIcon,
     PlusIcon,
     PencilIcon,
+    XMarkIcon,
     TrashIcon,
     DocumentArrowUpIcon
 } from "@/shared/heroicons";
@@ -58,10 +59,10 @@ const Registro = () => {
     ];
 
     const TABLE_HEAD_CUOTAS = [
-        // "Bien / Servicio",
         "Cuotas",
         "Fecha de Pago",
         "Monto",
+        ""
     ];
 
     // CAMPOS CLIENTE
@@ -110,6 +111,7 @@ const Registro = () => {
     // CONST PARA TOOLTIP_ID
     const [ToolTipEditId, setToolTipEditId] = useState<string | null>(null);
     const [ToolTipDeleteId, setToolTipDeleteId] = useState<string | null>(null);
+    const [ToolTipDeleteCuotas, setToolTipDeleteCuotas] = useState<string | null>(null);
 
     //DATA PRODUCTOS
     const [dataProducto, setDataProducto] = useState<Producto[]>([]);
@@ -542,16 +544,16 @@ const Registro = () => {
             data_detail_xml.push(model_detail_xml);
         }
 
-        // for (let index = 0; index < cuotas.length; index++) {
-        //     const element = cuotas[index];
-        //     let model_cuotas_xml = {
-        //         Descripcion: element.descripcion,
-        //         Importe: parseFloat(element.monto),
-        //         Fecha_Pago: element.fechaPago,
+        for (let index = 0; index < cuotas.length; index++) {
+            const element = cuotas[index];
+            let model_cuotas_xml = {
+                Descripcion: element.descripcion,
+                Importe: parseFloat(element.monto),
+                Fecha_Pago: element.fechaPago,
 
-        //     }
-        //     data_cuotas_xml.push(model_cuotas_xml)
-        // }
+            }
+            data_cuotas_xml.push(model_cuotas_xml)
+        }
 
         let Op_Inafectas = opInafectas ? opInafectas : icbper;
         if (opInafectas && icbper) {
@@ -567,7 +569,7 @@ const Registro = () => {
             Fecha_Emision: dataFactura.fechaEmision,
             Fecha_Vencimiento: dataFactura.fechaVencimiento,
             Condicion_Pago: dataFactura.condicionPago,
-            // Cuotas: dataFactura.condicionPago == 'Contado' ? [] : data_cuotas_xml,
+            Cuotas: dataFactura.condicionPago == 'Contado' ? [] : data_cuotas_xml,
             Moneda: dataFactura.moneda,
             Op_Gravadas: opGravadas,
             Op_Inafectas: Op_Inafectas,
@@ -582,23 +584,23 @@ const Registro = () => {
 
         console.log(model_factura_xml)
 
-        // GenerarXMLFactura(model_factura_xml).then((result: any) => {
-        //     if (result.indicator == 1) {
-        //         toast.success(
-        //             `${result.message}`, {
-        //             duration: 2000,
-        //             position: 'top-center',
-        //         });
-        //         setTimeout(FunctionEnviarFactura, 2000)
-        //     }
-        //     else {
-        //         toast.error(
-        //             `${result.message}`, {
-        //             duration: 3000,
-        //             position: 'top-center',
-        //         });
-        //     }
-        // })
+        GenerarXMLFactura(model_factura_xml).then((result: any) => {
+            if (result.indicator == 1) {
+                toast.success(
+                    `${result.message}`, {
+                    duration: 2000,
+                    position: 'top-center',
+                });
+                setTimeout(FunctionEnviarFactura, 2000)
+            }
+            else {
+                toast.error(
+                    `${result.message}`, {
+                    duration: 3000,
+                    position: 'top-center',
+                });
+            }
+        })
     }
 
     function FunctionEnviarFactura() {
@@ -1024,16 +1026,16 @@ const Registro = () => {
         const cuotaExacta = montoTotal / numeroCuotas;
         const cuotaRedondeada = Math.floor(cuotaExacta * 100) / 100;
         let diferencia = (montoTotal - (cuotaRedondeada * numeroCuotas)).toFixed(2);
-    
+
         let cuotas = Array(numeroCuotas).fill(cuotaRedondeada);
         let index = 0;
-    
+
         while (parseFloat(diferencia) !== 0) {
             cuotas[index] += 0.01;
             diferencia = (parseFloat(diferencia) - 0.01).toFixed(2);
             index = (index + 1) % numeroCuotas;
         }
-    
+
         return cuotas;
     };
 
@@ -1050,9 +1052,9 @@ const Registro = () => {
         } else if (plazoPago === 'SEMESTRAL') {
             fechaPago.setMonth(fechaPago.getMonth() + (index * 6) + 1); // Sumar 6 meses por cada cuota
         }
-    
+
         const cuotaNumero = index + 1;
-        const numero = 'CUOTA ' + cuotaNumero.toString().padStart(2, '0'); // Formatear el número de la cuota
+        const numero = 'Cuota0' + cuotaNumero.toString().padStart(2, '0'); // Formatear el número de la cuota
         return {
             descripcion: numero,
             monto: cuota.toFixed(2).toString(), // Limitar a 2 decimales
@@ -1067,81 +1069,27 @@ const Registro = () => {
     };
 
     useEffect(() => {
-        if (montoTotal.trim() !== '' && !isNaN(parseFloat(montoTotal))) {
+        if (montoTotal.trim() !== '' && !isNaN(parseFloat(montoTotal)) && plazoPago.trim() !== '') {
             actualizarCuotas();
         }
     }, [numeroCuotas, plazoPago]);
-
-
-    // useEffect(() => {
-    //     const calcularCuotas = (montoTotal: number, numeroCuotas: number): number[] => {
-    //         const cuotaExacta = montoTotal / numeroCuotas;
-    //         const cuotaRedondeada = Math.floor(cuotaExacta * 100) / 100;
-    //         let diferencia = (montoTotal - (cuotaRedondeada * numeroCuotas)).toFixed(2);
-
-    //         let cuotas = Array(numeroCuotas).fill(cuotaRedondeada);
-    //         let index = 0;
-
-    //         while (parseFloat(diferencia) !== 0) {
-    //             cuotas[index] += 0.01;
-    //             diferencia = (parseFloat(diferencia) - 0.01).toFixed(2);
-    //             index = (index + 1) % numeroCuotas;
-    //         }
-
-    //         return cuotas;
-    //     };
-
-    //     let montoCuota = 0;
-    //     if (montoTotal.trim() !== '' && !isNaN(parseFloat(montoTotal))) {
-    //         montoCuota = parseFloat(montoTotal) / numeroCuotas;
-    //     }
-
-    //     const cuotas = calcularCuotas(parseFloat(montoTotal), numeroCuotas);
-
-    //     const newCuotas = cuotas.map((cuota, index) => {
-    //         let fechaPago = new Date();
-    //         if (plazoPago === 'QUINCENAL') {
-    //             fechaPago.setDate(fechaPago.getDate() + (index * 15) + 1); // Sumar 15 días por cada cuota
-    //         } else if (plazoPago === 'MENSUAL') {
-    //             fechaPago.setMonth(fechaPago.getMonth() + index + 1); // Sumar 1 mes por cada cuota
-    //         } else if (plazoPago === 'BIMESTRAL') {
-    //             fechaPago.setMonth(fechaPago.getMonth() + (index * 2) + 1); // Sumar 2 meses por cada cuota
-    //         } else if (plazoPago === 'TRIMESTRAL') {
-    //             fechaPago.setMonth(fechaPago.getMonth() + (index * 3) + 1); // Sumar 3 meses por cada cuota
-    //         } else if (plazoPago === 'SEMESTRAL') {
-    //             fechaPago.setMonth(fechaPago.getMonth() + (index * 6) + 1); // Sumar 6 meses por cada cuota
-    //         }
-
-    //         const cuotaNumero = index + 1;
-    //         const numero = 'CUOTA ' + cuotaNumero.toString().padStart(2, '0'); // Formatear el número de la cuota
-    //         return {
-    //             descripcion: numero,
-    //             monto: cuota.toFixed(2).toString(), // Limitar a 2 decimales
-    //             fechaPago: fechaPago.toISOString().split('T')[0], // Convertir fecha a formato ISO
-    //         };
-    //     });
-    //     setCuotas(newCuotas);
-    // }, [numeroCuotas, plazoPago]);
 
     const handleChangeMontoCuota = (index: number, newMonto: string) => {
         const newCuotas = [...cuotas];
         newCuotas[index - 1] = { ...newCuotas[index - 1], monto: newMonto };
         setCuotas(newCuotas);
 
-        // Calcular el nuevo monto total sumando todos los montos de cuotas
         const total = newCuotas.reduce((acc, cuota) => {
 
-            // Convertir el monto a número antes de sumarlo
             const montoNumerico = parseFloat(cuota.monto);
 
-            // Verificar si el monto es un número válido
             if (!isNaN(montoNumerico)) {
                 return acc + montoNumerico;
             } else {
                 return acc;
             }
         }, 0);
-        setMontoTotal(total.toString());
+        setMontoTotal(total.toFixed(2));
     };
 
     const handleChangePlazoPago = (i: number, newFechaPago: string) => {
@@ -1150,47 +1098,87 @@ const Registro = () => {
         setCuotas(newCuotas);
     }
 
-    const generarFilasCuotas = (numeroCuotas: number, plazoPago: string): JSX.Element[] => {
+    const handleEliminarCuota = (index: number) => {
+        // Eliminar la cuota en el índice especificado
+        const nuevasCuotas = [...cuotas];
+        nuevasCuotas.splice(index - 1, 1);
+
+        // Actualizar el número de cuotas y los montos de las cuotas
+        setNumeroCuotas(nuevasCuotas.length);
+        setCuotas(nuevasCuotas);
+    };
+
+    const generarFilasCuotas = (numeroCuotas: number): JSX.Element[] => {
         const filas: JSX.Element[] = [];
         for (let i = 1; i <= numeroCuotas; i++) {
             filas.push(
-                <tr key={i}>
-                    <td>{i.toString().padStart(2, '0')}</td>
-                    <td>
-                        <Input
-                            color='teal'
-                            crossOrigin={undefined}
-                            type="date"
-                            value={cuotas[i - 1]?.fechaPago}
+                <tr key={i} className=" border-b border-gray-300">
+                    <td className='p-2'>
+                        <div className=''>
+                            {i.toString().padStart(2, '0')}
+                        </div>
+                    </td>
+                    <td className='p-2'>
+                        <div className='w-72'>
+                            <Input
+                                color='teal'
+                                size="md"
+                                crossOrigin={undefined}
+                                type="date"
+                                value={cuotas[i - 1]?.fechaPago || ''}
 
-                            onChange={(e) => {
-                                handleChangePlazoPago(i, e.target.value)
-                            }}
-                        />
+                                onChange={(e) => {
+                                    handleChangePlazoPago(i, e.target.value)
+                                }}
+                            />
+                        </div>
+
+                    </td>
+                    <td className='p-2'>
+                        <div className='w-72'>
+                            <Input
+                                color='teal'
+                                size="md"
+                                crossOrigin={undefined}
+                                value={cuotas[i - 1]?.monto || ''}
+                                onChange={(e) => {
+                                    const newValue = e.target.value.trim();
+                                    if (/^\d{0,6}(\.\d{0,2})?$/.test(newValue)) {
+                                        handleChangeMontoCuota(i, newValue);
+                                    }
+                                }}
+                            />
+                        </div>
                     </td>
                     <td>
-                        <Input
-                            color='teal'
-                            crossOrigin={undefined}
-                            value={cuotas[i - 1]?.monto}
-                            onChange={(e) => {
-                                const newValue = e.target.value.trim();
-                                if (/^\d{0,6}(\.\d{0,2})?$/.test(newValue)) {
-                                    handleChangeMontoCuota(i, newValue);
-                                }
+                        <Tooltip
+                            content="Borrar cuota" placement="top"
+                            animate={{
+                                mount: { scale: 1, y: 0 },
+                                unmount: { scale: 0, y: 25 },
                             }}
-                        />
+                            open={ToolTipDeleteCuotas === (i.toString())}
+                        >
+                            <IconButton
+                                variant="text"
+                                onClick={() => {
+                                    handleEliminarCuota(i)
+                                    setToolTipDeleteCuotas(null);
+                                }}
+                                onMouseOver={() => setToolTipDeleteCuotas((i.toString()))}
+                                onMouseLeave={() => setToolTipDeleteCuotas(null)}
+                            >
+                                <XMarkIcon
+                                    className={`h-6 w-6 ${ToolTipDeleteCuotas === (i.toString()) ? 'color-text' : 'text-gray-800'}`}
+                                />
+                            </IconButton>
+                        </Tooltip>
                     </td>
                 </tr>
             );
         }
         return filas;
     };
-
-    const guardarCuotas = () => {
-        console.log('Cuotas guardadas:', cuotas);
-    };
-
 
     return (
         <>
@@ -1435,14 +1423,14 @@ const Registro = () => {
                                 </thead>
                                 <tbody>
                                     {dataProducto.length === 0 ? (
-                                        <tr className=" border-b border-gray-600">
+                                        <tr className=" border-b border-gray-300">
                                             <td colSpan={TABLE_HEAD.length} className="p-4 text-center">
                                                 No hay productos registrados
                                             </td>
                                         </tr>
                                     ) : (
                                         dataProducto.map((item, key) => (
-                                            <tr key={key} className=" border-b border-gray-600">
+                                            <tr key={key} className=" border-b border-gray-300">
                                                 {/* <td className="p-2">
                                                             <Typography variant="small" color="blue-gray" className="font-normal">
                                                                 {item.Bien_Servicio == "B" ? 'BIEN' : 'SERVICIO'}
@@ -1645,89 +1633,95 @@ const Registro = () => {
                         </>
                     )}
 
-                    {/* DATOS DE LAS CUOTAS */}
-                    {IdTipoDocumento != '3' && (
-                        <div className="justify-start flex gap-4">
-                            <Chip variant="outlined" value="DETALLE DE CUOTAS" className="rounded-lg" color='teal' size="md" />
-                        </div>
-                    )}
 
-                    {/* campos cabecera cuota */}
-                    {IdTipoDocumento != '3' && (
-                        <div className="my-4 flex flex-col">
-                            <div className="grid grid-cols-4 gap-2">
-                                <div>
-                                    <Input
-                                        color='teal'
-                                        crossOrigin={undefined}
-                                        value={montoTotal.toString()}
-                                        size="md"
-                                        label="Monto neto pendiente de pago"
-                                        onChange={(e) => setMontoTotal((e.target.value))}
-                                    />
+
+                    {dataFactura.condicionPago !== 'Contado' && (
+                        <>
+                            {/* DATOS DE LAS CUOTAS */}
+                            {IdTipoDocumento != '3' && (
+                                <div className="justify-start flex gap-4">
+                                    <Chip variant="outlined" value="DETALLE DE CUOTAS" className="rounded-lg" color='teal' size="md" />
                                 </div>
-                                <div>
-                                    <Input
-                                        type='number'
-                                        color='teal'
-                                        crossOrigin={undefined}
-                                        value={numeroCuotas.toString()}
-                                        size="md"
-                                        label="Número de cuotas"
-                                        max={12}
-                                        min={1}
-                                        onChange={(e) => setNumeroCuotas(parseInt(e.target.value))}
-                                    />
+                            )}
+
+                            {/* campos cabecera cuota */}
+                            {IdTipoDocumento != '3' && (
+                                <div className="my-4 flex flex-col">
+                                    <div className="grid grid-cols-4 gap-2">
+                                        <div>
+                                            <Input
+                                                color='teal'
+                                                crossOrigin={undefined}
+                                                value={montoTotal.toString()}
+                                                size="md"
+                                                label="Monto neto pendiente de pago"
+                                                onChange={(e) => {
+                                                    const newValue = e.target.value.trim();
+                                                    if (/^\d{0,6}(\.\d{0,2})?$/.test(newValue)) {
+                                                        setMontoTotal(newValue);
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Input
+                                                type='number'
+                                                color='teal'
+                                                crossOrigin={undefined}
+                                                value={numeroCuotas.toString()}
+                                                size="md"
+                                                label="Número de cuotas"
+                                                max={12}
+                                                min={1}
+                                                onChange={(e) => setNumeroCuotas(parseInt(e.target.value))}
+                                            />
+                                        </div>
+                                        <Select
+                                            color='teal'
+                                            label="Plazo de pago"
+                                            size="md"
+                                            value={plazoPago}
+                                            onChange={(e) => {
+                                                setPlazoPago(e as string);
+                                            }}
+                                        >
+                                            {ListadoPlazoPago.map((tipo) => (
+                                                <Option key={tipo.code} value={tipo.code}>
+                                                    {tipo.name}
+                                                </Option>
+                                            ))}
+                                        </Select>
+                                    </div>
                                 </div>
-                                <Select
-                                    color='teal'
-                                    label="Plazo de pago"
-                                    // name="condicionPago"
-                                    size="md"
-                                    value={plazoPago}
-                                    // key={condicionPago}
-                                    onChange={(e) => {
-                                        setPlazoPago(e as string);
-                                        // handleChangePlazoPago(e!)
-                                    }}
-                                >
-                                    {ListadoPlazoPago.map((tipo) => (
-                                        <Option key={tipo.code} value={tipo.code}>
-                                            {tipo.name}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </div>
-                        </div>
-                    )}
+                            )}
 
-                    {/* TABLA CUOTAS */}
-                    {IdTipoDocumento != '3' && (
-                        <div className="my-4 overflow-x-auto">
-                            <table className="w-full min-w-max table-auto text-left rounded-lg overflow-hidden">
-                                <thead>
-                                    <tr>
-                                        {TABLE_HEAD_CUOTAS.map((head) => (
-                                            <th key={head} className="color-bg-teal-500 border-y border-blue-gray-100 p-4">
-                                                <Typography
-                                                    variant="h6"
-                                                    color="white"
-                                                    className="font-semibold leading-none"
-                                                >
-                                                    {head}
-                                                </Typography>
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {generarFilasCuotas(numeroCuotas, plazoPago)}
-                                </tbody>
-                            </table>
-                        </div>
+                            {/* TABLA CUOTAS */}
+                            {IdTipoDocumento != '3' && (
+                                <div className="my-4 overflow-x-auto">
+                                    <table className="w-full min-w-max table-auto text-left rounded-lg overflow-hidden">
+                                        <thead>
+                                            <tr>
+                                                {TABLE_HEAD_CUOTAS.map((head) => (
+                                                    <th key={head} className="color-bg-teal-500 border-y border-blue-gray-100 p-4">
+                                                        <Typography
+                                                            variant="h6"
+                                                            color="white"
+                                                            className="font-semibold leading-none"
+                                                        >
+                                                            {head}
+                                                        </Typography>
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {generarFilasCuotas(numeroCuotas)}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </>
                     )}
-
-                    <button onClick={guardarCuotas}>Guardar Cuotas</button>
 
                     {/* BOTÓN PARA ENVIAR DOCUMENTO */}
                     {IdTipoDocumento != '3' && (
