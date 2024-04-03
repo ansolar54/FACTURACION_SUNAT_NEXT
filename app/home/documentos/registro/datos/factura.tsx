@@ -110,7 +110,7 @@ export default function Factura({ onSendDataFactura: onSendDataFactura }: Factur
   return (
     <>
       <div className='my-3 flex flex-col'>
-        <div className="grid grid-cols-6 gap-2">
+        <div className="grid grid-cols-5 gap-2">
           <Select
             color='teal'
             label="Condición de Pago"
@@ -158,7 +158,8 @@ export default function Factura({ onSendDataFactura: onSendDataFactura }: Factur
             }}
           />
           {condicionPago == 'Contado' && (
-            <div>
+            <div className='flex items-center'>
+              <label htmlFor="fechaVencimiento" className="text-xs font-medium text-gray-600">Fecha Venci.</label>
               <Input
                 type='date'
                 color='teal'
@@ -170,6 +171,7 @@ export default function Factura({ onSendDataFactura: onSendDataFactura }: Factur
                 onChange={(e) => {
                   setfechaVencimiento(e.target.value)
                 }}
+                id='fechaVencimiento'
                 disabled={condicionPago == "Contado" ? true : false}
                 min={fechaEmision}
               />

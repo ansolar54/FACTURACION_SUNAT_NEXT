@@ -643,6 +643,7 @@ const Registro = () => {
 
     function FuctionRegistrarFactura() {
         let data_detail = [];
+        let data_cuotas_xml = [];
 
         for (let i = 0; i < dataProducto.length; i++) {
             const element = dataProducto[i];
@@ -663,6 +664,17 @@ const Registro = () => {
             data_detail.push(model_detail);
         }
 
+        for (let index = 0; index < cuotas.length; index++) {
+            const element = cuotas[index];
+            let model_cuotas_xml = {
+                Descripcion: element.descripcion,
+                Importe: parseFloat(element.monto),
+                Fecha_Pago: element.fechaPago,
+
+            }
+            data_cuotas_xml.push(model_cuotas_xml)
+        }
+
         let Op_Inafectas = opInafectas ? opInafectas : icbper;
         if (opInafectas && icbper) {
             Op_Inafectas = opInafectas + icbper;
@@ -675,6 +687,7 @@ const Registro = () => {
             Fecha_Emision: dataFactura.fechaEmision,
             Fecha_Vencimiento: dataFactura.fechaVencimiento,
             Condicion_Pago: dataFactura.condicionPago,
+            Cuotas: dataFactura.condicionPago == 'Contado' ? [] : data_cuotas_xml,
             Moneda: dataFactura.moneda,
             Nro_Pedido: dataFactura.nroPedido,
             Orden_Compra: dataFactura.ordenCompra,
@@ -688,7 +701,6 @@ const Registro = () => {
             Igv: igv,
             Igv_Percent: igvPercent,
             Importe_Total: importeTotal,
-            observacion: dataFactura.observacion,
             Observacion: dataFactura.observacion,
             Serie: serie,
             Correlativo: correlativo,
@@ -756,7 +768,7 @@ const Registro = () => {
                     reject(error);
                 });
         })
-    }
+    };
 
     async function functionArmarPDF_D(item: any) {
         try {
@@ -770,6 +782,7 @@ const Registro = () => {
                     if (result_2.indicator == 1) {
 
                         let data_detail = [];
+                        let data_cuotas_xml = [];
 
                         for (let i = 0; i < dataFacturaCliente.DetalleDocumento.length; i++) {
                             const element = dataFacturaCliente.DetalleDocumento[i];
@@ -782,6 +795,17 @@ const Registro = () => {
                                 Importe: element.Importe,
                             };
                             data_detail.push(model_detail);
+                        }
+
+                        for (let index = 0; index < cuotas.length; index++) {
+                            const element = cuotas[index];
+                            let model_cuotas_xml = {
+                                Descripcion: element.descripcion,
+                                Importe: parseFloat(element.monto),
+                                Fecha_Pago: element.fechaPago,
+
+                            }
+                            data_cuotas_xml.push(model_cuotas_xml)
                         }
 
                         let Empresa = {
@@ -806,8 +830,9 @@ const Registro = () => {
                             Nro_Doc_Cliente: dataFacturaCliente.Nro_Doc_Cliente,
                             Direccion_Cliente: dataFacturaCliente.Direccion_Cliente,
                             Fecha_Emision: dataFacturaCliente.Fecha_Emision,
-                            Fecha_Vencimiento: dataFacturaCliente.Fecha_Vencimiento,
+                            Fecha_Vencimiento: dataFactura.condicionPago == 'Contado' ? dataFacturaCliente.Fecha_Vencimiento : '',
                             Condicion_Pago: dataFacturaCliente.Condicion_Pago,
+                            Cuotas: dataFactura.condicionPago == 'Contado' ? [] : data_cuotas_xml,
                             Moneda: dataFacturaCliente.Moneda,
                             Nro_Pedido: dataFacturaCliente.Nro_Pedido,
                             Orden_Compra: dataFacturaCliente.Orden_Compra,
@@ -905,7 +930,7 @@ const Registro = () => {
             console.error('Error:', error);
             return null;
         }
-    }
+    };
 
     const base64ToBlob = (base64Data: string, contentType: string) => {
         const byteCharacters = atob(base64Data);
@@ -941,14 +966,14 @@ const Registro = () => {
 
             URL.revokeObjectURL(url); // Liberar el objeto URL
         })
-    }
+    };
 
     // FUNCIONES PARA ENVIAR PDF Y XML POR CORREO
 
     function formatDateCorreo(dateString: string) {
         const [year, month, day] = dateString.split('-');
         return `${day}-${month}-${year}`;
-    }
+    };
 
     function FuctionEnviarCorreo(pdf: string, xml: string) {
         try {
@@ -1003,7 +1028,7 @@ const Registro = () => {
             console.error('Error:', error);
             return null;
         }
-    }
+    };
 
 
     // PRUEBAS PARA CUOTAS AL CRÉDITO
@@ -1042,7 +1067,7 @@ const Registro = () => {
     const generarNuevaCuota = (index: number, cuota: number, plazoPago: string): { descripcion: string, monto: string, fechaPago: string } => {
         let fechaPago = new Date();
         if (plazoPago === 'QUINCENAL') {
-            fechaPago.setDate(fechaPago.getDate() + (index * 15) + 1); // Sumar 15 días por cada cuota
+            fechaPago.setDate(fechaPago.getDate() + (index * 15) + 15); // Sumar 15 días por cada cuota
         } else if (plazoPago === 'MENSUAL') {
             fechaPago.setMonth(fechaPago.getMonth() + index + 1); // Sumar 1 mes por cada cuota
         } else if (plazoPago === 'BIMESTRAL') {
@@ -1069,7 +1094,9 @@ const Registro = () => {
     };
 
     useEffect(() => {
-        if (montoTotal.trim() !== '' && !isNaN(parseFloat(montoTotal)) && plazoPago.trim() !== '') {
+        if (montoTotal.trim() !== '' && !isNaN(parseFloat(montoTotal))
+        //  && plazoPago.trim() !== ''
+        ) {
             actualizarCuotas();
         }
     }, [numeroCuotas, plazoPago]);
@@ -1096,16 +1123,26 @@ const Registro = () => {
         const newCuotas = [...cuotas];
         newCuotas[i - 1] = { ...newCuotas[i - 1], fechaPago: newFechaPago };
         setCuotas(newCuotas);
+        setPlazoPago('MANUAL');
     }
 
     const handleEliminarCuota = (index: number) => {
-        // Eliminar la cuota en el índice especificado
-        const nuevasCuotas = [...cuotas];
-        nuevasCuotas.splice(index - 1, 1);
-
-        // Actualizar el número de cuotas y los montos de las cuotas
-        setNumeroCuotas(nuevasCuotas.length);
-        setCuotas(nuevasCuotas);
+        if (cuotas.length == 1) {
+            toast.error(
+                `No se puede eliminar.`, {
+                duration: 3000,
+                position: 'top-center',
+                id: 'No se puede eliminar.'
+            });
+        } else {
+            // Eliminar la cuota en el índice especificado
+            const nuevasCuotas = [...cuotas];
+            nuevasCuotas.splice(index - 1, 1);
+    
+            // Actualizar el número de cuotas y los montos de las cuotas
+            setNumeroCuotas(nuevasCuotas.length);
+            setCuotas(nuevasCuotas);
+        }
     };
 
     const generarFilasCuotas = (numeroCuotas: number): JSX.Element[] => {
@@ -1130,6 +1167,7 @@ const Registro = () => {
                                 onChange={(e) => {
                                     handleChangePlazoPago(i, e.target.value)
                                 }}
+                                max='9999-12-31'
                             />
                         </div>
 
@@ -1344,8 +1382,9 @@ const Registro = () => {
                                 </div>
                                 <div>
                                     <Input
-                                        className='pointer-events-none bg-gray-200'
-                                        readOnly
+                                        // className='pointer-events-none bg-gray-200'
+                                        // readOnly
+                                        disabled
                                         color='teal'
                                         crossOrigin={undefined}
                                         name="Nombre"
@@ -1357,8 +1396,9 @@ const Registro = () => {
                                 </div>
                                 <div>
                                     <Input
-                                        className='pointer-events-none bg-gray-200'
-                                        readOnly
+                                        // className='pointer-events-none bg-gray-200'
+                                        // readOnly
+                                        disabled
                                         color='teal'
                                         crossOrigin={undefined}
                                         name="Correo"
@@ -1370,8 +1410,9 @@ const Registro = () => {
                                 </div>
                                 <div className='col-span-2'>
                                     <Input
-                                        className='pointer-events-none bg-gray-200'
-                                        readOnly
+                                        // className='pointer-events-none bg-gray-200'
+                                        // readOnly
+                                        disabled
                                         color='teal'
                                         crossOrigin={undefined}
                                         name="Direccion"
@@ -1648,11 +1689,11 @@ const Registro = () => {
                             {IdTipoDocumento != '3' && (
                                 <div className="my-4 flex flex-col">
                                     <div className="grid grid-cols-4 gap-2">
-                                        <div>
+                                        <div className='flex gap-2 items-center'>
                                             <Input
                                                 color='teal'
                                                 crossOrigin={undefined}
-                                                value={montoTotal.toString()}
+                                                value={montoTotal}
                                                 size="md"
                                                 label="Monto neto pendiente de pago"
                                                 onChange={(e) => {
@@ -1661,7 +1702,40 @@ const Registro = () => {
                                                         setMontoTotal(newValue);
                                                     }
                                                 }}
+                                                error={parseFloat(montoTotal) > importeTotal || montoTotal == '' || montoTotal == '0'}
                                             />
+                                            {(parseFloat(montoTotal) > importeTotal || montoTotal == '' || montoTotal == '0') && (
+                                                <Tooltip
+                                                    className="border border-red-500 bg-red-500 shadow-xl shadow-black/10"
+                                                    content={
+                                                        <div className="w-auto bg-red-500">
+                                                            <Typography
+                                                                variant="small"
+                                                                color="white"
+                                                                className="font-normal"
+                                                            >
+                                                                {montoTotal =='' || montoTotal == '0' ? 'Campo obligatorio.' : `Debe ser menor o igual al Importe Total.`}
+                                                            </Typography>
+                                                        </div>
+                                                    }
+                                                >
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        stroke="currentColor"
+                                                        strokeWidth={2}
+                                                        className="h-5 w-5 cursor-pointer text-red-500"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
+                                                        />
+                                                    </svg>
+                                                </Tooltip>
+                                            )}
+
                                         </div>
                                         <div>
                                             <Input

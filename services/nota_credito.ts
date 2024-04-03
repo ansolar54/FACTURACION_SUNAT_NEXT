@@ -136,3 +136,26 @@ export function GenerarPDFNotaCredito(req: any) {
       });
   });
 }
+
+export function ObtenerListadoNotaCredito(fecha_emision: string, id_tipo: string, nro_documento: string, limit: number, offset: number) {
+  const base = process.env.NEXT_PUBLIC_API_ROOT_IIS;
+  let BaseUrl = base + API_CONTROLLER + "/search?fecha_emision=" + fecha_emision + "&id_tipo=" + id_tipo +
+      "&nro_documento=" + nro_documento + "&limit=" + limit + "&offset=" + offset;
+
+  return new Promise((resolve, reject) => {
+      fetch(BaseUrl, {
+          method: "GET",
+          headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+          },
+      })
+          .then((response) => response.json())
+          .then((responseJson) => {
+              resolve(responseJson);
+          })
+          .catch((error) => {
+              reject(error);
+          });
+  });
+}

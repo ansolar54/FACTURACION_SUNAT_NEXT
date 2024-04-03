@@ -433,14 +433,15 @@ const EditProducto: React.FC<Props> = ({
                                             </Option>
                                         ))}
                                     </Select>
-                                    <div>
+                                    <div className='flex items-center gap-2'>
+                                        <label htmlFor="Codigo_Producto" className="text-xs font-medium text-gray-700">Código</label>
                                         <Input
-                                            className='pointer-events-none bg-gray-200'
-                                            readOnly
+                                            disabled
                                             color='teal'
                                             error={showErrors.Codigo_Producto && (producto.Codigo_Producto == '')}
                                             crossOrigin={undefined}
                                             name="Codigo_Producto"
+                                            id="Codigo_Producto"
                                             value={producto.Codigo_Producto}
                                             size="md"
                                             label="Código"
@@ -484,16 +485,17 @@ const EditProducto: React.FC<Props> = ({
                                             </Option>
                                         ))}
                                     </Select>
-                                    <div>
+                                    <div className='flex items-center gap-2'>
+                                        <label htmlFor="ICBPER" className="text-xs font-medium text-gray-700">ICBPER</label>
                                         <Input
                                             color='teal'
                                             crossOrigin={undefined}
                                             value={formatNumber(producto.ICBPER)}
                                             name="ICBPER"
+                                            id="ICBPER"
                                             size="md"
                                             label="ICBPER"
-                                            className='pointer-events-none bg-gray-200'
-                                            readOnly
+                                            disabled
                                         />
                                     </div>
                                     <div>
@@ -532,17 +534,17 @@ const EditProducto: React.FC<Props> = ({
                                             </Option>
                                         ))}
                                     </Select>
-                                    <div>
+                                    <div className='flex items-center gap-2'>
+                                        <label htmlFor="Importe" className="text-xs font-medium text-gray-700">Total</label>
                                         <Input
-                                            className='pointer-events-none bg-gray-200'
-                                            readOnly
+                                            disabled
                                             color='teal'
                                             error={showErrors.Importe && (producto.Importe == 0)}
                                             crossOrigin={undefined}
                                             name="Importe"
+                                            id="Importe"
                                             value={formatNumber(producto.Importe)}
                                             size="md"
-                                            label="Importe"
                                             maxLength={10}
                                         />
                                     </div>

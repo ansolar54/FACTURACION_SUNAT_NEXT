@@ -453,16 +453,17 @@ const AddProducto: React.FC<Props> = ({
                                             </Option>
                                         ))}
                                     </Select>
-                                    <div>
+                                    <div className='flex items-center gap-2'>
+                                        <label htmlFor="ICBPER" className="text-xs font-medium text-gray-700">ICBPER</label>
                                         <Input
+                                            className='w-auto'
+                                            disabled
                                             color='teal'
                                             crossOrigin={undefined}
                                             value={formatNumber(producto.ICBPER)}
                                             name="ICBPER"
+                                            id="ICBPER"
                                             size="md"
-                                            label="ICBPER"
-                                            className='pointer-events-none bg-gray-200'
-                                            readOnly
                                         />
                                     </div>
                                     <div>
@@ -501,17 +502,17 @@ const AddProducto: React.FC<Props> = ({
                                             </Option>
                                         ))}
                                     </Select>
-                                    <div>
+                                    <div className='flex items-center gap-2'>
+                                        <label htmlFor="Importe" className="text-xs font-medium text-gray-700">Total</label>
                                         <Input
-                                            className='pointer-events-none bg-gray-200'
-                                            readOnly
+                                            disabled
                                             color='teal'
                                             error={showErrors.Importe && (producto.Importe == 0)}
                                             crossOrigin={undefined}
                                             name="Importe"
                                             value={formatNumber(producto.Importe)}
                                             size="md"
-                                            label="Importe"
+                                            id="Importe"
                                             maxLength={10}
                                         />
                                     </div>

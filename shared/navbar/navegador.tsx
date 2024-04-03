@@ -237,6 +237,14 @@ export default function Navegador() {
                         Listado
                       </ListItem>
                     </Link>
+                    <Link href="/home/documentos/nota_credito">
+                      <ListItem  onClick={closeDrawer}>
+                        <ListItemPrefix>
+                          <ChevronRightIcon strokeWidth={3} className="h-3 w-5" />
+                        </ListItemPrefix>
+                        Nota de crédito
+                      </ListItem>
+                    </Link>
                   </List>
                 </AccordionBody>
               </Accordion>

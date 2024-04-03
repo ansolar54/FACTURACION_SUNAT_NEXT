@@ -99,7 +99,7 @@ export default function NotaCredito({
     const [listadoTipoNotaCredito, setlistadoTipoNotaCredito] = useState<Body[]>([]);
     const [tipoSeleccionado, setTipoSeleccionado] = useState<Body>({ Id: 0, Nombre: '' });
 
-    const [Id_Tipo_Nota_Credito, setId_Tipo_Nota_Credito] = useState("")
+    // const [Id_Tipo_Nota_Credito, setId_Tipo_Nota_Credito] = useState("")
 
     // RADIO BUTTON 1 = FACTURA // 2 = BOLETA
     const [Id_Tipo_Documento, setIdTipoDocumento] = useState(1);
@@ -459,7 +459,7 @@ export default function NotaCredito({
                         Docu_Referencia: Docu_Referencia,
                         Logo: dataEmpresa!.Logo,
                         Ruc_Emisor: dataFacturaCliente.Ruc_Empresa,
-                        Nro_Documento: dataFacturaCliente.Nro_Documento,
+                        Nro_Documento: nroNotaCredito,
                         Cliente: dataFacturaCliente.Cliente,
                         Nro_Doc_Cliente: dataFacturaCliente.Nro_Doc_Cliente,
                         Direccion_Cliente: dataFacturaCliente.Direccion_Cliente,
@@ -533,7 +533,7 @@ export default function NotaCredito({
                         Docu_Referencia: Docu_Referencia,
                         Logo: dataEmpresa!.Logo,
                         Ruc_Emisor: dataBoletaCliente.Ruc_Empresa,
-                        Nro_Documento: dataBoletaCliente.Nro_Documento,
+                        Nro_Documento: nroNotaCredito,
                         Cliente: dataBoletaCliente.Cliente,
                         Nro_Doc_Cliente: dataBoletaCliente.Nro_Doc_Cliente,
                         Direccion_Cliente: dataBoletaCliente.Direccion_Cliente,
@@ -564,20 +564,20 @@ export default function NotaCredito({
             console.log(NC_modal_pdf)
 
             GenerarPDFNotaCredito(NC_modal_pdf).then((result: any) => {
-                if (result.indicator == 1) {
-                    toast.success(
-                        `${result.message}`, {
-                        duration: 2000,
-                        position: 'top-center',
-                    });
-                }
-                else {
-                    toast.error(
-                        `${result.message}`, {
-                        duration: 3000,
-                        position: 'top-center',
-                    });
-                }
+                // if (result.indicator == 1) {
+                //     toast.success(
+                //         `${result.message}`, {
+                //         duration: 2000,
+                //         position: 'top-center',
+                //     });
+                // }
+                // else {
+                //     toast.error(
+                //         `${result.message}`, {
+                //         duration: 3000,
+                //         position: 'top-center',
+                //     });
+                // }
             })
 
         } catch (error) {
@@ -640,7 +640,6 @@ export default function NotaCredito({
                 });
                 functionGenerarCorrelativo_NC(rucEmisor, Id_Tipo_Documento)
                 setTimeout(FunctionModificarEstadoDocumento, 2000)
-                functionArmarPDF(numeroFE, Id_Cliente);
             }
             else {
                 toast.error(
@@ -655,6 +654,9 @@ export default function NotaCredito({
     function FunctionModificarEstadoDocumento() {
         ModificarEstadoDocumento(rucEmisor, numeroFE, 0).then((result: any) => {
             if (result.indicator == 1) {
+                setTimeout(function() {
+                    functionArmarPDF(numeroFE, Id_Cliente);
+                }, 2000);
                 toast.success(
                     `${result.message}`, {
                     duration: 2000,
@@ -699,7 +701,6 @@ export default function NotaCredito({
                         <Select
                             color='teal'
                             label="Tipo Nota Crédito"
-                            // name="Id_Tipo_Nota_Credito"
                             size="md"
                             value={tipoSeleccionado.Id.toString()}
                             key={tipoSeleccionado.Id}
