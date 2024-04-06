@@ -12,7 +12,8 @@ import {
     Breadcrumbs,
     Select,
     Option,
-    Chip
+    Chip,
+    Collapse
 } from "@/shared/material-tailwind-component"
 import toast, { Toaster } from 'react-hot-toast';
 import { ObtenerTipo_NotaCredito } from '@/services/tipo_nota_credito';
@@ -21,7 +22,9 @@ import { ObtenerListadoNotaCredito } from '@/services/nota_credito';
 import {
     ArrowLeftIcon,
     ArrowRightIcon,
-    EyeIcon
+    DocumentArrowUpIcon,
+    EyeIcon,
+    FunnelIcon
 } from '@/shared/heroicons'
 
 import {
@@ -30,6 +33,8 @@ import {
 } from '@/shared/font-awesome'
 
 import { DescargarPDFBase64 } from '@/services/factura';
+
+import { useRouter } from 'next/navigation';
 
 type Body = {
     Id: number;
@@ -46,6 +51,9 @@ interface Documento {
 
 
 export default function ListadoNotaCredito() {
+
+    //ROUTER
+    const router = useRouter()
 
     // CAMPOS PARA FILTRAR
     const [listadoTipoNotaCredito, setlistadoTipoNotaCredito] = useState<Body[]>([]);
@@ -250,6 +258,14 @@ export default function ListadoNotaCredito() {
         })
     }
 
+    function functionLinkNuevaNotaCredito() {
+        router.push('/home/documentos/nota_credito/add_nota_credito')
+    }
+
+    const [open, setOpen] = React.useState(false);
+
+    const toggleOpen = () => setOpen((cur) => !cur);
+
     return (
         <>
             <Breadcrumbs className="bg-transparent mt-1">
@@ -262,58 +278,140 @@ export default function ListadoNotaCredito() {
                 <a href="#">Nota de crédito</a>
             </Breadcrumbs>
             <Toaster />
+
             <Card className='w-full rounded-none' color="white" shadow={true}>
                 <CardBody className="rounded-md pt-2 px-4">
-                    <div className="grid grid-cols-5 gap-4">
-                        <div>
-                            <Input
-                                color='teal'
-                                crossOrigin={undefined}
-                                name="numeroFE"
-                                value={numeroDoc}
-                                size="md"
-                                label="N° Doc."
-                                onChange={(e) => {
-                                    setNumeroDOC(e.target.value)
-                                    functionListarNotaCreditos(1, fechaEmision, id_Tipo_Nota_Credito, e.target.value)
-                                }}
+                    <div className='justify-between flex'>
+                        <Button variant="outlined" className='flex items-center gap-2' onClick={toggleOpen}>
+                            <FunnelIcon strokeWidth={2} className='h-5 w-5'
                             />
-                        </div>
-                        <div>
-                            <Input
-                                type='date'
-                                color='teal'
-                                crossOrigin={undefined}
-                                name="fechaEmision"
-                                value={fechaEmision}
-                                size="md"
-                                label="Fecha Emisión"
-                                onChange={(e) => {
-                                    setfechaEmision(e.target.value)
-                                    functionListarNotaCreditos(1, e.target.value, id_Tipo_Nota_Credito, numeroDoc)
-                                }}
-                                max='9999-12-31'
-                            />
-                        </div>
-                        <Select
-                            color='teal'
-                            label="Tipo"
-                            name="moneda"
+                            Filtro</Button>
+                        <Button
+                            className="flex items-center gap-3 color-button"
                             size="md"
-                            value={id_Tipo_Nota_Credito}
-                            key={id_Tipo_Nota_Credito}
-                            onChange={(e) => {
-                                setId_Tipo_Nota_Credito(e as string)
-                                functionListarNotaCreditos(1, fechaEmision, e as string, numeroDoc)
-                            }}
+                            // color={numeroFE && tipoSeleccionado.Id && fechaEmision && motivo}
+                            // disabled={!numeroFE || !tipoSeleccionado.Id || !fechaEmision || !motivo}
+                            // onClick={() => functionArmarXML(numeroFE, Id_Cliente)}
+                            onClick={() => functionLinkNuevaNotaCredito()}
                         >
-                            {listadoTipoNotaCredito.map((tipo) => (
-                                <Option key={tipo.Id} value={tipo.Id.toString()}>
-                                    {tipo.Nombre}
-                                </Option>
-                            ))}
-                        </Select>
+                            <DocumentArrowUpIcon strokeWidth={2} className='h-5 w-5'
+                            />
+                            NUEVA NOTA CRÉDITO
+                        </Button>
                     </div>
+                    {open && (
+                        <div className={`transition-opacity duration-300`}>
+                            <div className="grid grid-cols-5 gap-4 pt-3">
+                                <div>
+                                    <Input
+                                        color='teal'
+                                        crossOrigin={undefined}
+                                        name="numeroFE"
+                                        value={numeroDoc}
+                                        size="md"
+                                        label="N° Doc."
+                                        onChange={(e) => {
+                                            setNumeroDOC(e.target.value)
+                                            functionListarNotaCreditos(1, fechaEmision, id_Tipo_Nota_Credito, e.target.value)
+                                        }}
+                                    />
+                                </div>
+                                <div>
+                                    <Input
+                                        type='date'
+                                        color='teal'
+                                        crossOrigin={undefined}
+                                        name="fechaEmision"
+                                        value={fechaEmision}
+                                        size="md"
+                                        label="Fecha Emisión"
+                                        onChange={(e) => {
+                                            setfechaEmision(e.target.value)
+                                            functionListarNotaCreditos(1, e.target.value, id_Tipo_Nota_Credito, numeroDoc)
+                                        }}
+                                        max='9999-12-31'
+                                    />
+                                </div>
+                                <Select
+                                    color='teal'
+                                    label="Tipo"
+                                    name="moneda"
+                                    size="md"
+                                    value={id_Tipo_Nota_Credito}
+                                    key={Number(id_Tipo_Nota_Credito)}
+                                    onChange={(e) => {
+                                        setId_Tipo_Nota_Credito(e as string)
+                                        functionListarNotaCreditos(1, fechaEmision, e as string, numeroDoc)
+                                    }}
+                                >
+                                    {listadoTipoNotaCredito.map((tipo) => (
+                                        <Option key={tipo.Id} value={tipo.Id.toString()}>
+                                            {tipo.Nombre}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </div>
+                        </div>
+
+                    )}
+                    {/* <Collapse open={open}>
+                        <Card className="w-full rounded-none" color="white" shadow={false}>
+                            <CardBody className="rounded-md pt-2 px-0 pb-0">
+                                <div className="grid grid-cols-5 gap-4">
+                                    <div>
+                                        <Input
+                                            color='teal'
+                                            crossOrigin={undefined}
+                                            name="numeroFE"
+                                            value={numeroDoc}
+                                            size="md"
+                                            label="N° Doc."
+                                            onChange={(e) => {
+                                                setNumeroDOC(e.target.value)
+                                                functionListarNotaCreditos(1, fechaEmision, id_Tipo_Nota_Credito, e.target.value)
+                                            }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <Input
+                                            type='date'
+                                            color='teal'
+                                            crossOrigin={undefined}
+                                            name="fechaEmision"
+                                            value={fechaEmision}
+                                            size="md"
+                                            label="Fecha Emisión"
+                                            onChange={(e) => {
+                                                setfechaEmision(e.target.value)
+                                                functionListarNotaCreditos(1, e.target.value, id_Tipo_Nota_Credito, numeroDoc)
+                                            }}
+                                            max='9999-12-31'
+                                        />
+                                    </div>
+                                    <Select
+                                        color='teal'
+                                        label="Tipo"
+                                        name="moneda"
+                                        size="md"
+                                        value={id_Tipo_Nota_Credito}
+                                        key={Number(id_Tipo_Nota_Credito)}
+                                        onChange={(e) => {
+                                            setId_Tipo_Nota_Credito(e as string)
+                                            functionListarNotaCreditos(1, fechaEmision, e as string, numeroDoc)
+                                        }}
+                                        className='relative z-10'
+                                    >
+                                        {listadoTipoNotaCredito.map((tipo) => (
+                                            <Option key={tipo.Id} value={tipo.Id.toString()}>
+                                                {tipo.Nombre}
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </div>
+                            </CardBody>
+                        </Card>
+                    </Collapse> */}
+
                     <div className="py-3 overflow-x-auto">
                         <table className="w-full min-w-max table-auto text-left rounded-lg overflow-hidden">
                             <thead>

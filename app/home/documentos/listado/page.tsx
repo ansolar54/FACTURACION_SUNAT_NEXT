@@ -419,7 +419,7 @@ export default function page() {
             <Toaster />
             <Card className='w-full rounded-none' color="white" shadow={true}>
                 <CardBody className="rounded-md pt-2 px-4">
-                    <div className="my-4 flex flex-col gap-6">
+                    <div className="flex flex-col gap-6">
                         <div className="grid grid-cols-5 gap-4">
                             <Select
                                 color='teal'
@@ -510,7 +510,7 @@ export default function page() {
 
                         </div>
                     </div>
-                    <div className="pb-3 overflow-x-auto">
+                    <div className="py-3 overflow-x-auto">
                         <table className="w-full min-w-max table-auto text-left rounded-lg overflow-hidden">
                             <thead>
                                 <tr >

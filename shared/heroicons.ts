@@ -18,10 +18,12 @@ import {
     AdjustmentsHorizontalIcon,
     ChevronRightIcon, ChevronDownIcon,
     DocumentMagnifyingGlassIcon,
-    XMarkIcon 
+    XMarkIcon,
+    FunnelIcon
 } from '@heroicons/react/24/outline'
 
 export {
+    FunnelIcon,
     ArrowLeftIcon,
     ArrowRightIcon,
     UserPlusIcon,

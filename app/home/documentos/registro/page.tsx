@@ -79,7 +79,7 @@ const Registro = () => {
     const ListadoIdTipoDocu = [
         { Code: '1', Name: 'FACTURA' },
         { Code: '2', Name: 'BOLETA' },
-        { Code: '3', Name: 'NOTA CRÉDITO' },
+        // { Code: '3', Name: 'NOTA CRÉDITO' },
     ];
 
     // CAMPOS FACTURA
@@ -1095,7 +1095,7 @@ const Registro = () => {
 
     useEffect(() => {
         if (montoTotal.trim() !== '' && !isNaN(parseFloat(montoTotal))
-        //  && plazoPago.trim() !== ''
+            //  && plazoPago.trim() !== ''
         ) {
             actualizarCuotas();
         }
@@ -1138,7 +1138,7 @@ const Registro = () => {
             // Eliminar la cuota en el índice especificado
             const nuevasCuotas = [...cuotas];
             nuevasCuotas.splice(index - 1, 1);
-    
+
             // Actualizar el número de cuotas y los montos de las cuotas
             setNumeroCuotas(nuevasCuotas.length);
             setCuotas(nuevasCuotas);
@@ -1218,6 +1218,22 @@ const Registro = () => {
         return filas;
     };
 
+    const isButtonDisabled = () => {
+        if (!importeTotal || !cliente.Nombre) {
+            return true;
+        }
+
+        if (IdTipoDocumento == '1' && (NroDocumento_Cliente.length < 11 || !dataFactura.fechaEmision)) {
+            return true;
+        }
+
+        if (IdTipoDocumento == '2' && (NroDocumento_Cliente.length < 8 || !dataBoleta.fechaEmision)) {
+            return true;
+        }
+
+        return false;
+    };
+
     return (
         <>
             <AddCliente
@@ -1292,11 +1308,6 @@ const Registro = () => {
                                 value={`N° Boleta : ${nroBoleta}`}
                                 className="rounded-lg py-3" />
                         )}
-                        {IdTipoDocumento == '3' && (
-                            <Chip color="teal" variant="ghost"
-                                value={`N° Nota Crédito : ${dataNCredito.nroNotaCredito}`}
-                                className="rounded-lg py-3" />
-                        )}
                     </div>
 
                     {/* CAMPOS DATOS DEL DOCUMENTO */}
@@ -1306,375 +1317,359 @@ const Registro = () => {
                     {IdTipoDocumento == '2' && (
                         <Boleta onSendDataBoleta={handleDataBoleta} />
                     )}
-                    {IdTipoDocumento == '3' && (
-                        <NotaCredito onSendDataNCredito={handleDataNotaCredito} rucEmisor={rucEmisor} dataEmpresa={dataEmpresa} />
-                    )}
 
                     {/* DATOS DEL CLIENTE */}
-                    {IdTipoDocumento != '3' && (
-                        <div className="justify-between flex gap-4">
-                            <div className='flex gap-4'>
-                                <Chip variant="outlined" value="Datos del Cliente" className="rounded-lg py-3" color='teal' />
-                                <Button size="md" className="flex items-center gap-3 color-button"
-                                    onClick={() =>
-                                        setOpenAddCliente(!openAddCliente)
-                                    }
-                                >
-                                    <UserPlusIcon strokeWidth={2} className='h-5 w-5' />
-                                    AGREGAR CLIENTE
-                                </Button>
-                            </div>
+                    <div className="justify-between flex gap-4">
+                        <div className='flex gap-4'>
+                            <Chip variant="outlined" value="Datos del Cliente" className="rounded-lg py-3" color='teal' />
+                            <Button size="md" className="flex items-center gap-3 color-button"
+                                onClick={() =>
+                                    setOpenAddCliente(!openAddCliente)
+                                }
+                            >
+                                <UserPlusIcon strokeWidth={2} className='h-5 w-5' />
+                                AGREGAR CLIENTE
+                            </Button>
                         </div>
-                    )}
+                    </div>
 
                     {/* CAMPOS DATOS DEL CLIENTE */}
-                    {IdTipoDocumento != '3' && (
-                        <div className="my-4 flex flex-col">
-                            <div className="grid grid-cols-5 gap-2">
-                                <div className='flex gap-2 items-center'>
-                                    <Input
-                                        color='teal'
-                                        crossOrigin={undefined}
-                                        name="Nro_Doc"
-                                        value={NroDocumento_Cliente}
-                                        size="md"
-                                        label="N° Documento"
-                                        onChange={(e) => {
-                                            setNroDocumento_Cliente(e.target.value)
-                                            functionObtenerClienteByNroDoc(e.target.value)
-                                        }}
-                                        maxLength={20}
-                                        error={IdTipoDocumento == '1' ? NroDocumento_Cliente.length < 11 : IdTipoDocumento == '2' ? NroDocumento_Cliente.length < 8 : true}
-                                        icon={<i className="fas fa-heart" />}
-                                    />
-                                    {((IdTipoDocumento == '1' && NroDocumento_Cliente.length < 11) || ((IdTipoDocumento == '2' && NroDocumento_Cliente.length < 8))) && (
-                                        <Tooltip
-                                            className="border border-red-500 bg-red-500 shadow-xl shadow-black/10"
-                                            content={
-                                                <div className="w-auto bg-red-500">
-                                                    <Typography
-                                                        variant="small"
-                                                        color="white"
-                                                        className="font-normal"
-                                                    >
-                                                        {IdTipoDocumento == "1" ? 'Debe ser RUC.' : 'Debe ser DNI o RUC.'}
-                                                    </Typography>
-                                                </div>
-                                            }
+                    <div className="my-4 flex flex-col">
+                        <div className="grid grid-cols-5 gap-2">
+                            <div className='flex gap-2 items-center'>
+                                <Input
+                                    color='teal'
+                                    crossOrigin={undefined}
+                                    name="Nro_Doc"
+                                    value={NroDocumento_Cliente}
+                                    size="md"
+                                    label="N° Documento"
+                                    onChange={(e) => {
+                                        setNroDocumento_Cliente(e.target.value)
+                                        functionObtenerClienteByNroDoc(e.target.value)
+                                    }}
+                                    maxLength={20}
+                                    error={(IdTipoDocumento === '1' && NroDocumento_Cliente.length < 11) ||
+                                        (IdTipoDocumento === '2' && NroDocumento_Cliente.length < 8) ||
+                                        !cliente.Nombre}
+                                    icon={<i className="fas fa-heart" />}
+                                />
+                                {(IdTipoDocumento == '1' && NroDocumento_Cliente.length < 11) ||
+                                    (IdTipoDocumento == '2' && NroDocumento_Cliente.length < 8) ||
+                                    (NroDocumento_Cliente && !cliente.Nombre) ? (
+                                    <Tooltip
+                                        className="border border-red-500 bg-red-500 shadow-xl shadow-black/10"
+                                        content={
+                                            <div className="w-auto bg-red-500">
+                                                <Typography
+                                                    variant="small"
+                                                    color="white"
+                                                    className="font-normal"
+                                                >
+                                                    {NroDocumento_Cliente && !cliente.Nombre ? 'No se encuentra cliente.' : IdTipoDocumento == '1' ? 'Debe ser RUC.' : 'Debe ser DNI o RUC.'}  </Typography>
+                                            </div>
+                                        }
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                            strokeWidth={2}
+                                            className="h-5 w-5 cursor-pointer text-red-500"
                                         >
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
-                                                strokeWidth={2}
-                                                className="h-5 w-5 cursor-pointer text-red-500"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
-                                                />
-                                            </svg>
-                                        </Tooltip>
-                                    )}
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
+                                            />
+                                        </svg>
+                                    </Tooltip>
+                                ) : null}
 
-                                </div>
-                                <div>
-                                    <Input
-                                        // className='pointer-events-none bg-gray-200'
-                                        // readOnly
-                                        disabled
-                                        color='teal'
-                                        crossOrigin={undefined}
-                                        name="Nombre"
-                                        value={cliente.Nombre}
-                                        size="md"
-                                        label="Cliente"
-                                        maxLength={150}
-                                    />
-                                </div>
-                                <div>
-                                    <Input
-                                        // className='pointer-events-none bg-gray-200'
-                                        // readOnly
-                                        disabled
-                                        color='teal'
-                                        crossOrigin={undefined}
-                                        name="Correo"
-                                        value={cliente.Correo}
-                                        size="md"
-                                        label="Correo"
-                                        maxLength={100}
-                                    />
-                                </div>
-                                <div className='col-span-2'>
-                                    <Input
-                                        // className='pointer-events-none bg-gray-200'
-                                        // readOnly
-                                        disabled
-                                        color='teal'
-                                        crossOrigin={undefined}
-                                        name="Direccion"
-                                        value={cliente.Direccion}
-                                        size="md"
-                                        label="Dirección"
-                                        maxLength={150}
-                                    />
-                                </div>
+                            </div>
+                            <div>
+                                <Input
+                                    // className='pointer-events-none bg-gray-200'
+                                    // readOnly
+                                    disabled
+                                    color='teal'
+                                    crossOrigin={undefined}
+                                    name="Nombre"
+                                    value={cliente.Nombre}
+                                    size="md"
+                                    label="Cliente"
+                                    maxLength={150}
+                                />
+                            </div>
+                            <div>
+                                <Input
+                                    disabled
+                                    color='teal'
+                                    crossOrigin={undefined}
+                                    name="Correo"
+                                    value={cliente.Correo}
+                                    size="md"
+                                    label="Correo"
+                                    maxLength={100}
+                                />
+                            </div>
+                            <div className='col-span-2'>
+                                <Input
+                                    disabled
+                                    color='teal'
+                                    crossOrigin={undefined}
+                                    name="Direccion"
+                                    value={cliente.Direccion}
+                                    size="md"
+                                    label="Dirección"
+                                    maxLength={150}
+                                />
                             </div>
                         </div>
-                    )}
+                    </div>
 
                     {/* DATOS DEL PRODUCTO */}
-                    {IdTipoDocumento != '3' && (
-                        <div className="justify-start flex gap-4">
-                            <Chip variant="outlined" value="Datos del PRODUCTO" className="rounded-lg" color='teal' size="md" />
-                            <div>
-                                <Button size="md" className="flex items-center gap-3 color-button"
-                                    onClick={() =>
-                                        setOpenAddProducto(!openAddProducto)
-                                    }
-                                >
-                                    <PlusIcon strokeWidth={2} className='h-5 w-5' />
-                                    AGREGAR PRODUCTO
-                                </Button>
-                            </div>
+                    <div className="justify-start flex gap-4">
+                        <Chip variant="outlined" value="Datos del PRODUCTO" className="rounded-lg" color='teal' size="md" />
+                        <div>
+                            <Button size="md" className="flex items-center gap-3 color-button"
+                                onClick={() =>
+                                    setOpenAddProducto(!openAddProducto)
+                                }
+                            >
+                                <PlusIcon strokeWidth={2} className='h-5 w-5' />
+                                AGREGAR PRODUCTO
+                            </Button>
                         </div>
-                    )}
+                    </div>
 
                     {/* TABLA DE PRODUCTO */}
-                    {IdTipoDocumento != '3' && (
-                        <div className="my-4 overflow-x-auto">
-                            <table className="w-full min-w-max table-auto text-left rounded-lg overflow-hidden">
-                                <thead>
-                                    <tr>
-                                        {TABLE_HEAD.map((head) => (
-                                            <th key={head} className="color-bg-teal-500 border-y border-blue-gray-100 p-4">
-                                                <Typography
-                                                    variant="h6"
-                                                    color="white"
-                                                    className="font-semibold leading-none"
-                                                >
-                                                    {head}
-                                                </Typography>
-                                            </th>
-                                        ))}
+                    <div className="my-4 overflow-x-auto">
+                        <table className="w-full min-w-max table-auto text-left rounded-lg overflow-hidden">
+                            <thead>
+                                <tr>
+                                    {TABLE_HEAD.map((head) => (
+                                        <th key={head} className="color-bg-teal-500 border-y border-blue-gray-100 p-4">
+                                            <Typography
+                                                variant="h6"
+                                                color="white"
+                                                className="font-semibold leading-none"
+                                            >
+                                                {head}
+                                            </Typography>
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {dataProducto.length === 0 ? (
+                                    <tr className=" border-b border-gray-300">
+                                        <td colSpan={TABLE_HEAD.length} className="p-4 text-center">
+                                            No hay productos registrados
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    {dataProducto.length === 0 ? (
-                                        <tr className=" border-b border-gray-300">
-                                            <td colSpan={TABLE_HEAD.length} className="p-4 text-center">
-                                                No hay productos registrados
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        dataProducto.map((item, key) => (
-                                            <tr key={key} className=" border-b border-gray-300">
-                                                {/* <td className="p-2">
+                                ) : (
+                                    dataProducto.map((item, key) => (
+                                        <tr key={key} className=" border-b border-gray-300">
+                                            {/* <td className="p-2">
                                                             <Typography variant="small" color="blue-gray" className="font-normal">
                                                                 {item.Bien_Servicio == "B" ? 'BIEN' : 'SERVICIO'}
                                                             </Typography>
                                                         </td> */}
-                                                <td className="p-2">
-                                                    <Typography variant="small" color="blue-gray" className="font-normal">
-                                                        {item.Descripcion}
-                                                    </Typography>
-                                                </td>
-                                                <td className="p-2">
-                                                    <Typography variant="small" color="blue-gray" className="font-normal">
-                                                        {item.Codigo_Producto}
-                                                    </Typography>
-                                                </td>
-                                                <td className="p-2">
-                                                    <Typography variant="small" color="blue-gray" className="font-normal">
-                                                        {item.Tipo_Tributo}
-                                                    </Typography>
-                                                </td>
-                                                <td className="p-2">
-                                                    <Typography variant="small" color="blue-gray" className="font-normal">
-                                                        {item.Unidad_Medida}
-                                                    </Typography>
-                                                </td>
-                                                <td className="p-2">
-                                                    <Typography variant="small" color="blue-gray" className="font-normal">
-                                                        {formatNumber(parseFloat(item.Cantidad))}
-                                                    </Typography>
-                                                </td>
-                                                <td className="p-2">
-                                                    <Typography variant="small" color="blue-gray" className="font-normal">
-                                                        {formatNumber(parseFloat(item.Valor_Unitario))}
-                                                    </Typography>
-                                                </td>
-                                                <td className="p-2">
-                                                    <Typography variant="small" color="blue-gray" className="font-normal">
-                                                        {item.Tipo_Tributo == 'IGV' ? formatNumber(((parseFloat(item.Valor_Unitario) * parseFloat(item.Cantidad)) * (igvPercent / 100))) : '0.00'}
-                                                    </Typography>
-                                                </td>
-                                                <td className="p-2">
-                                                    <Typography variant="small" color="blue-gray" className="font-normal">
-                                                        {formatNumber(item.ICBPER)}
-                                                    </Typography>
-                                                </td>
-                                                <td className="p-2">
-                                                    <Typography variant="small" color="blue-gray" className="font-normal">
-                                                        {formatNumber(item.Importe)}
-                                                    </Typography>
-                                                </td>
-                                                <td className="p-2">
-                                                    <div className='flex'>
-                                                        <Tooltip
-                                                            content="Editar" placement="top"
-                                                            animate={{
-                                                                mount: { scale: 1, y: 0 },
-                                                                unmount: { scale: 0, y: 25 },
+                                            <td className="p-2">
+                                                <Typography variant="small" color="blue-gray" className="font-normal">
+                                                    {item.Descripcion}
+                                                </Typography>
+                                            </td>
+                                            <td className="p-2">
+                                                <Typography variant="small" color="blue-gray" className="font-normal">
+                                                    {item.Codigo_Producto}
+                                                </Typography>
+                                            </td>
+                                            <td className="p-2">
+                                                <Typography variant="small" color="blue-gray" className="font-normal">
+                                                    {item.Tipo_Tributo}
+                                                </Typography>
+                                            </td>
+                                            <td className="p-2">
+                                                <Typography variant="small" color="blue-gray" className="font-normal">
+                                                    {item.Unidad_Medida}
+                                                </Typography>
+                                            </td>
+                                            <td className="p-2">
+                                                <Typography variant="small" color="blue-gray" className="font-normal">
+                                                    {formatNumber(parseFloat(item.Cantidad))}
+                                                </Typography>
+                                            </td>
+                                            <td className="p-2">
+                                                <Typography variant="small" color="blue-gray" className="font-normal">
+                                                    {formatNumber(parseFloat(item.Valor_Unitario))}
+                                                </Typography>
+                                            </td>
+                                            <td className="p-2">
+                                                <Typography variant="small" color="blue-gray" className="font-normal">
+                                                    {item.Tipo_Tributo == 'IGV' ? formatNumber(((parseFloat(item.Valor_Unitario) * parseFloat(item.Cantidad)) * (igvPercent / 100))) : '0.00'}
+                                                </Typography>
+                                            </td>
+                                            <td className="p-2">
+                                                <Typography variant="small" color="blue-gray" className="font-normal">
+                                                    {formatNumber(item.ICBPER)}
+                                                </Typography>
+                                            </td>
+                                            <td className="p-2">
+                                                <Typography variant="small" color="blue-gray" className="font-normal">
+                                                    {formatNumber(item.Importe)}
+                                                </Typography>
+                                            </td>
+                                            <td className="p-2">
+                                                <div className='flex'>
+                                                    <Tooltip
+                                                        content="Editar" placement="top"
+                                                        animate={{
+                                                            mount: { scale: 1, y: 0 },
+                                                            unmount: { scale: 0, y: 25 },
+                                                        }}
+                                                        open={ToolTipEditId === (item.Codigo_Producto)}
+                                                    >
+                                                        <IconButton
+                                                            variant="text"
+                                                            onClick={() => {
+                                                                functionOpenEditProducto(item.Codigo_Producto),
+                                                                    setToolTipEditId(null);
                                                             }}
-                                                            open={ToolTipEditId === (item.Codigo_Producto)}
+                                                            onMouseOver={() => setToolTipEditId((item.Codigo_Producto))}
+                                                            onMouseLeave={() => setToolTipEditId(null)}
                                                         >
-                                                            <IconButton
-                                                                variant="text"
-                                                                onClick={() => {
-                                                                    functionOpenEditProducto(item.Codigo_Producto),
-                                                                        setToolTipEditId(null);
-                                                                }}
-                                                                onMouseOver={() => setToolTipEditId((item.Codigo_Producto))}
-                                                                onMouseLeave={() => setToolTipEditId(null)}
-                                                            >
-                                                                <PencilIcon
-                                                                    className={`h-6 w-6 ${ToolTipEditId === (item.Codigo_Producto) ? 'color-text' : 'text-gray-800'}`}
-                                                                />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                        <Tooltip
-                                                            content="Borrar" placement="top"
-                                                            animate={{
-                                                                mount: { scale: 1, y: 0 },
-                                                                unmount: { scale: 0, y: 25 },
+                                                            <PencilIcon
+                                                                className={`h-6 w-6 ${ToolTipEditId === (item.Codigo_Producto) ? 'color-text' : 'text-gray-800'}`}
+                                                            />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip
+                                                        content="Borrar" placement="top"
+                                                        animate={{
+                                                            mount: { scale: 1, y: 0 },
+                                                            unmount: { scale: 0, y: 25 },
+                                                        }}
+                                                        open={ToolTipDeleteId === (item.Codigo_Producto)}
+                                                    >
+                                                        <IconButton variant="text"
+                                                            onClick={() => {
+                                                                functionDelete(item.Codigo_Producto);
+                                                                setToolTipDeleteId(null);
                                                             }}
-                                                            open={ToolTipDeleteId === (item.Codigo_Producto)}
+                                                            onMouseOver={() => setToolTipDeleteId((item.Codigo_Producto))}
+                                                            onMouseLeave={() => setToolTipDeleteId(null)}
                                                         >
-                                                            <IconButton variant="text"
-                                                                onClick={() => {
-                                                                    functionDelete(item.Codigo_Producto);
-                                                                    setToolTipDeleteId(null);
-                                                                }}
-                                                                onMouseOver={() => setToolTipDeleteId((item.Codigo_Producto))}
-                                                                onMouseLeave={() => setToolTipDeleteId(null)}
-                                                            >
-                                                                <TrashIcon className={`h-6 w-6 ${ToolTipDeleteId === (item.Codigo_Producto) ? 'color-text' : 'text-gray-800'}`} />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                                                            <TrashIcon className={`h-6 w-6 ${ToolTipDeleteId === (item.Codigo_Producto) ? 'color-text' : 'text-gray-800'}`} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
 
                     {/* CAMPOS DE OPERACIONES PRODUCTO */}
-                    {IdTipoDocumento != '3' && (
-                        <>
-                            {/* REDISEÑO CON COLUMNAS */}
-                            <div className="grid grid-cols-8 gap-2 justify-items-end mx-2">
-                                {opGravadas != 0 && (
-                                    <>
-                                        <div className="col-start-7 flex items-center">
-                                            <Typography variant="small" color="blue-gray" className="font-semibold">Op. Gravada :</Typography>
-                                        </div>
-                                        <div className="col-end-9 flex items-center">
-                                            <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(opGravadas)}</Typography>
-                                        </div>
-                                    </>
-                                )}
-                                {opInafectas != 0 && (
-                                    <>
-                                        <div className="col-start-7 flex items-center">
-                                            <Typography variant="small" color="blue-gray" className="font-semibold">Op. Inafecta :</Typography>
-                                        </div>
-                                        <div className="col-end-9 flex items-center">
-                                            <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(opInafectas)}</Typography>
-                                        </div>
-                                    </>
-                                )}
-                                {opExonerada != 0 && (
-                                    <>
-                                        <div className="col-start-7 flex items-center">
-                                            <Typography variant="small" color="blue-gray" className="font-semibold">Op. Exonerada :</Typography>
-                                        </div>
-                                        <div className="col-end-9 flex items-center">
-                                            <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(opExonerada)}</Typography>
-                                        </div>
-                                    </>
-                                )}
-                                {icbper != 0 && (
-                                    <>
-                                        <div className="col-start-7 flex items-center">
-                                            <Typography variant="small" color="blue-gray" className="font-semibold">ICBPER :</Typography>
-                                        </div>
-                                        <div className="col-end-9 flex items-center">
-                                            <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(icbper)}</Typography>
-                                        </div>
-                                    </>
-                                )}
-                                {descuentos != 0 && (
-                                    <>
-                                        <div className="col-start-7 flex items-center">
-                                            <Typography variant="small" color="blue-gray" className="font-semibold">Descuentos :</Typography>
-                                        </div>
-                                        <div className="col-end-9 flex items-center">
-                                            <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(descuentos)}</Typography>
-                                        </div>
-                                    </>
-                                )}
-                                {anticipos != 0 && (
-                                    <>
-                                        <div className="col-start-7 flex items-center">
-                                            <Typography variant="small" color="blue-gray" className="font-semibold">Anticipos :</Typography>
-                                        </div>
-                                        <div className="col-end-9 flex items-center">
-                                            <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(anticipos)}</Typography>
-                                        </div>
-                                    </>
-                                )}
-                                {igv != 0 && (
-                                    <>
-                                        <div className="col-start-7 flex items-center">
-                                            <Typography variant="small" color="blue-gray" className="font-semibold">IGV (18%) :</Typography>
-                                        </div>
-                                        <div className="col-end-9 flex items-center">
-                                            <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(igv)}</Typography>
-                                        </div>
-                                    </>
-                                )}
-                                {valorVentaTotal != 0 && (
-                                    <>
-                                        <div className="col-start-7 flex items-center">
-                                            <Typography variant="small" color="blue-gray" className="font-semibold">Valor de Venta :</Typography>
-                                        </div>
-                                        <div className="col-end-9 flex items-center">
-                                            <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(valorVentaTotal)}</Typography>
-                                        </div>
-                                    </>
-                                )}
-                                {importeTotal != 0 && (
-                                    <>
-                                        <div className="col-start-7 flex items-center">
-                                            <Typography variant="h5" color="blue-gray" className="font-semibold">Importe Total :</Typography>
-                                        </div>
-                                        <div className="col-end-9 flex items-center">
-                                            <Typography variant="h5" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(importeTotal)}</Typography>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </>
-                    )}
-
-
+                    <>
+                        {/* REDISEÑO CON COLUMNAS */}
+                        <div className="grid grid-cols-8 gap-2 justify-items-end mx-2">
+                            {opGravadas != 0 && (
+                                <>
+                                    <div className="col-start-7 flex items-center">
+                                        <Typography variant="small" color="blue-gray" className="font-semibold">Op. Gravada :</Typography>
+                                    </div>
+                                    <div className="col-end-9 flex items-center">
+                                        <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(opGravadas)}</Typography>
+                                    </div>
+                                </>
+                            )}
+                            {opInafectas != 0 && (
+                                <>
+                                    <div className="col-start-7 flex items-center">
+                                        <Typography variant="small" color="blue-gray" className="font-semibold">Op. Inafecta :</Typography>
+                                    </div>
+                                    <div className="col-end-9 flex items-center">
+                                        <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(opInafectas)}</Typography>
+                                    </div>
+                                </>
+                            )}
+                            {opExonerada != 0 && (
+                                <>
+                                    <div className="col-start-7 flex items-center">
+                                        <Typography variant="small" color="blue-gray" className="font-semibold">Op. Exonerada :</Typography>
+                                    </div>
+                                    <div className="col-end-9 flex items-center">
+                                        <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(opExonerada)}</Typography>
+                                    </div>
+                                </>
+                            )}
+                            {icbper != 0 && (
+                                <>
+                                    <div className="col-start-7 flex items-center">
+                                        <Typography variant="small" color="blue-gray" className="font-semibold">ICBPER :</Typography>
+                                    </div>
+                                    <div className="col-end-9 flex items-center">
+                                        <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(icbper)}</Typography>
+                                    </div>
+                                </>
+                            )}
+                            {descuentos != 0 && (
+                                <>
+                                    <div className="col-start-7 flex items-center">
+                                        <Typography variant="small" color="blue-gray" className="font-semibold">Descuentos :</Typography>
+                                    </div>
+                                    <div className="col-end-9 flex items-center">
+                                        <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(descuentos)}</Typography>
+                                    </div>
+                                </>
+                            )}
+                            {anticipos != 0 && (
+                                <>
+                                    <div className="col-start-7 flex items-center">
+                                        <Typography variant="small" color="blue-gray" className="font-semibold">Anticipos :</Typography>
+                                    </div>
+                                    <div className="col-end-9 flex items-center">
+                                        <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(anticipos)}</Typography>
+                                    </div>
+                                </>
+                            )}
+                            {igv != 0 && (
+                                <>
+                                    <div className="col-start-7 flex items-center">
+                                        <Typography variant="small" color="blue-gray" className="font-semibold">IGV (18%) :</Typography>
+                                    </div>
+                                    <div className="col-end-9 flex items-center">
+                                        <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(igv)}</Typography>
+                                    </div>
+                                </>
+                            )}
+                            {valorVentaTotal != 0 && (
+                                <>
+                                    <div className="col-start-7 flex items-center">
+                                        <Typography variant="small" color="blue-gray" className="font-semibold">Valor de Venta :</Typography>
+                                    </div>
+                                    <div className="col-end-9 flex items-center">
+                                        <Typography variant="paragraph" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(valorVentaTotal)}</Typography>
+                                    </div>
+                                </>
+                            )}
+                            {importeTotal != 0 && (
+                                <>
+                                    <div className="col-start-7 flex items-center">
+                                        <Typography variant="h5" color="blue-gray" className="font-semibold">Importe Total :</Typography>
+                                    </div>
+                                    <div className="col-end-9 flex items-center">
+                                        <Typography variant="h5" color="blue-gray" className="font-normal">{(IdTipoDocumento === '1' ? (dataFactura.moneda === 'PEN' ? 'S/ ' : '$ ') : IdTipoDocumento === '2' ? (dataBoleta.moneda === 'PEN' ? 'S/ ' : '$ ') : '') + formatNumber(importeTotal)}</Typography>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </>
 
                     {dataFactura.condicionPago !== 'Contado' && (
                         <>
@@ -1714,7 +1709,7 @@ const Registro = () => {
                                                                 color="white"
                                                                 className="font-normal"
                                                             >
-                                                                {montoTotal =='' || montoTotal == '0' ? 'Campo obligatorio.' : `Debe ser menor o igual al Importe Total.`}
+                                                                {montoTotal == '' || montoTotal == '0' ? 'Campo obligatorio.' : `Debe ser menor o igual al Importe Total.`}
                                                             </Typography>
                                                         </div>
                                                     }
@@ -1798,29 +1793,27 @@ const Registro = () => {
                     )}
 
                     {/* BOTÓN PARA ENVIAR DOCUMENTO */}
-                    {IdTipoDocumento != '3' && (
-                        <>
-                            <hr className='my-4 border-blue-gray-300' />
-                            <div className="justify-end flex gap-4">
-                                <Button size="md" className="flex items-center gap-3 color-button"
-                                    disabled={
-                                        !importeTotal ||
-                                        !cliente.Nombre
-                                        // (IdTipoDocumento == '1' && (NroDocumento_Cliente.length < 11 || !dataFactura.fechaEmision)) ||
-                                        // (IdTipoDocumento == '2' && NroDocumento_Cliente.length < 8 || !dataBoleta.fechaEmision)
-                                    }
-                                    onClick={() =>
-                                        functionConfirmarDocumento()
-                                    }
-                                >
-                                    <DocumentArrowUpIcon strokeWidth={2} className='h-5 w-5'
-                                    />
-                                    ENVIAR {IdTipoDocumento == '1' ? 'FACTURA' : 'BOLETA'}
-                                </Button>
-                            </div>
-                        </>
-                    )}
-
+                    <>
+                        <hr className='my-4 border-blue-gray-300' />
+                        <div className="justify-end flex gap-4">
+                            <Button size="md" className="flex items-center gap-3 color-button"
+                                disabled={
+                                    isButtonDisabled()
+                                    // !importeTotal ||
+                                    // !cliente.Nombre
+                                    // (IdTipoDocumento == '1' && (NroDocumento_Cliente.length < 11 || !dataFactura.fechaEmision)) ||
+                                    // (IdTipoDocumento == '2' && NroDocumento_Cliente.length < 8 || !dataBoleta.fechaEmision)
+                                }
+                                onClick={() =>
+                                    functionConfirmarDocumento()
+                                }
+                            >
+                                <DocumentArrowUpIcon strokeWidth={2} className='h-5 w-5'
+                                />
+                                ENVIAR {IdTipoDocumento == '1' ? 'FACTURA' : 'BOLETA'}
+                            </Button>
+                        </div>
+                    </>
                 </CardBody>
             </Card >
         </>
