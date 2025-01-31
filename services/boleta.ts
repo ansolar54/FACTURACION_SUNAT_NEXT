@@ -138,7 +138,7 @@ export function ObtenerBoletaCliente(nro_boleta: string, id_cliente: number) {
 
 export function GenerarPDFBoleta(req: any) {
   const base = process.env.NEXT_PUBLIC_API_ROOT_IIS;
-  let BaseUrl = base + API_CONTROLLER + "/generate_pdf";
+  let BaseUrl = base + API_CONTROLLER + "/generate_pdf_quest";
 
   return new Promise((resolve, reject) => {
     fetch(BaseUrl, {

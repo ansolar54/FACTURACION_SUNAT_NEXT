@@ -157,7 +157,7 @@ const AddProducto: React.FC<Props> = ({
 
     function functionCancelar() {
         setOpen(false)
-        functionLimpiarCampos();
+        // functionLimpiarCampos();
     }
 
     const functionLimpiarCampos = () => {
